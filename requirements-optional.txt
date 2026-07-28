@@ -1,0 +1,6 @@
+# 可选依赖：Chroma 向量检索后端（默认不安装，不影响离线主流程）
+# 启用方式：
+#   pip install -r requirements-optional.txt
+#   export OPSPILOT_RAG_BACKEND=chroma
+#   export DASHSCOPE_API_KEY=sk-xxx   # embedding 由 DashScope 提供
+chromadb>=0.4.0

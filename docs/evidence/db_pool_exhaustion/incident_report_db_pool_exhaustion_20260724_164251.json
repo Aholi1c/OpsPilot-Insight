@@ -1,0 +1,505 @@
+{
+  "report_id": "RPT-14FBE5E1",
+  "scenario": "db_pool_exhaustion",
+  "generated_at": "2026-07-24T16:42:51+08:00",
+  "trace_id": "e0bdd14da3c74f99bac444a24dd248c3",
+  "incident": {
+    "incident_id": "INC-1B589EC0",
+    "title": "DBConnectionPoolExhausted @ order-service",
+    "severity": "critical",
+    "created_at": "2026-07-24T16:42:51+08:00",
+    "raw_alert_count": 4,
+    "deduped_alert_count": 3,
+    "alert_groups": [
+      {
+        "alertname": "DBConnectionPoolExhausted",
+        "service": "order-service",
+        "severity": "critical",
+        "count": 1,
+        "first_starts_at": "2026-07-23T09:32:00+08:00",
+        "summary": "order-service 数据库连接池耗尽"
+      },
+      {
+        "alertname": "HighErrorRate",
+        "service": "order-service",
+        "severity": "critical",
+        "count": 1,
+        "first_starts_at": "2026-07-23T09:33:30+08:00",
+        "summary": "order-service 接口错误率超过 15%"
+      },
+      {
+        "alertname": "APIHighLatency",
+        "service": "api-gateway",
+        "severity": "warning",
+        "count": 1,
+        "first_starts_at": "2026-07-23T09:35:10+08:00",
+        "summary": "api-gateway 订单路由 P99 延迟超阈值"
+      }
+    ],
+    "affected_services": [
+      "api-gateway",
+      "order-service"
+    ],
+    "impact": {
+      "affected_services": [
+        "api-gateway",
+        "order-service"
+      ],
+      "upstream_impacted": [],
+      "downstream_dependencies": [
+        "mysql-orders"
+      ],
+      "blast_radius": [
+        "api-gateway",
+        "order-service"
+      ],
+      "blast_radius_size": 2,
+      "user_facing": true,
+      "user_impact": "故障已沿调用链传播至入口服务 ['api-gateway']，用户侧可感知"
+    },
+    "summary": "order-service 数据库连接池耗尽，订单查询/下单接口大面积超时报错，并经 api-gateway 以 504 形式扩散至用户侧，属 P1 级业务受损事件。"
+  },
+  "root_cause_candidates": [
+    {
+      "category": "db_pool_exhaustion",
+      "hypothesis": "order-service 数据库连接池耗尽，疑似由变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构）引入连接泄漏导致",
+      "service": "order-service",
+      "confidence": 0.95,
+      "evidences": [
+        {
+          "source": "logs",
+          "strength": "strong",
+          "description": "命中 db_pool_exhaustion 模式的异常日志 6 条",
+          "details": [
+            "[order-service] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=52s643ms).",
+            "[order-service] HikariPool-1 - Connection is not available, request timed out after 30000ms.",
+            "[order-service] java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms. at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)"
+          ]
+        },
+        {
+          "source": "metrics",
+          "strength": "strong",
+          "description": "检出 3 项异常指标，其中 2 项与该模式直接相关",
+          "details": [
+            "hikaricp_connections_active(order-service): 14.67 -> 48.67 connections",
+            "http_server_error_rate_percent(order-service): 0.23 -> 14.2 %"
+          ]
+        },
+        {
+          "source": "traces",
+          "strength": "strong",
+          "description": "受影响服务上定位到 3 个错误/慢 span",
+          "details": [
+            "api-gateway.GET /api/orders/list: 30045ms [ERROR]",
+            "order-service.OrderController.listOrders: 30021ms [ERROR]",
+            "order-service.HikariPool.getConnection: 30000ms [ERROR]"
+          ]
+        },
+        {
+          "source": "changes",
+          "strength": "strong",
+          "description": "告警前 4h 内存在关联变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构，发布单 REL-20260723-8841）",
+          "details": [
+            "CHG-20260723-0012 @ 2026-07-23T08:05:00+08:00 by chenwei"
+          ]
+        }
+      ],
+      "related_change_id": "CHG-20260723-0012"
+    },
+    {
+      "category": "generic_dependency",
+      "hypothesis": "下游依赖抖动引发的连锁反应（低置信度备选假设，主假设不成立时排查）",
+      "service": "api-gateway",
+      "confidence": 0.15,
+      "evidences": [
+        {
+          "source": "logs",
+          "strength": "weak",
+          "description": "异常日志与主假设模式高度重合，独立信号不足",
+          "details": []
+        },
+        {
+          "source": "metrics",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的指标信号",
+          "details": []
+        },
+        {
+          "source": "traces",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的链路信号",
+          "details": []
+        },
+        {
+          "source": "changes",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的变更记录",
+          "details": []
+        }
+      ],
+      "related_change_id": null
+    }
+  ],
+  "selected_root_cause": {
+    "category": "db_pool_exhaustion",
+    "hypothesis": "order-service 数据库连接池耗尽，疑似由变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构）引入连接泄漏导致",
+    "service": "order-service",
+    "confidence": 0.95,
+    "evidences": [
+      {
+        "source": "logs",
+        "strength": "strong",
+        "description": "命中 db_pool_exhaustion 模式的异常日志 6 条",
+        "details": [
+          "[order-service] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=52s643ms).",
+          "[order-service] HikariPool-1 - Connection is not available, request timed out after 30000ms.",
+          "[order-service] java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms. at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)"
+        ]
+      },
+      {
+        "source": "metrics",
+        "strength": "strong",
+        "description": "检出 3 项异常指标，其中 2 项与该模式直接相关",
+        "details": [
+          "hikaricp_connections_active(order-service): 14.67 -> 48.67 connections",
+          "http_server_error_rate_percent(order-service): 0.23 -> 14.2 %"
+        ]
+      },
+      {
+        "source": "traces",
+        "strength": "strong",
+        "description": "受影响服务上定位到 3 个错误/慢 span",
+        "details": [
+          "api-gateway.GET /api/orders/list: 30045ms [ERROR]",
+          "order-service.OrderController.listOrders: 30021ms [ERROR]",
+          "order-service.HikariPool.getConnection: 30000ms [ERROR]"
+        ]
+      },
+      {
+        "source": "changes",
+        "strength": "strong",
+        "description": "告警前 4h 内存在关联变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构，发布单 REL-20260723-8841）",
+        "details": [
+          "CHG-20260723-0012 @ 2026-07-23T08:05:00+08:00 by chenwei"
+        ]
+      }
+    ],
+    "related_change_id": "CHG-20260723-0012"
+  },
+  "similar_cases": [
+    {
+      "id": "CASE-2025-001",
+      "title": "订单服务连接池耗尽（促销活动前发布引入连接泄漏）",
+      "category": "db_pool_exhaustion",
+      "symptoms": "HikariPool 获取连接超时，活跃连接 20 分钟内从 12 爬升至上限 50 且不回落，订单接口 5xx 升至 15%",
+      "root_cause": "新增对账逻辑在异常分支未关闭 Connection，压测未覆盖该分支",
+      "resolution": "回滚发布 -> 临时调大池上限至 60 -> 滚动重启释放泄漏连接，40 分钟恢复",
+      "duration_minutes": 40,
+      "score": 105.1962
+    },
+    {
+      "id": "CASE-2025-004",
+      "title": "库存服务慢 SQL 拖垮数据库连接池",
+      "category": "db_pool_exhaustion",
+      "symptoms": "大促期间库存查询 QPS 翻倍，一条未走索引的慢 SQL 占满连接池，连锁引发下单失败",
+      "root_cause": "新查询条件组合缺失联合索引，单条查询耗时 8s 占用连接",
+      "resolution": "紧急上线 SQL 限流 -> DBA 在线加索引 -> 连接池占用回落，65 分钟恢复",
+      "duration_minutes": 65,
+      "score": 100.2236
+    },
+    {
+      "id": "CASE-2025-011",
+      "title": "用户服务线程池打满引发登录超时",
+      "category": "thread_pool_exhaustion",
+      "symptoms": "登录接口超时率 30%，tomcat busy 线程数打满，CPU 却不高",
+      "root_cause": "下游风控接口 RT 从 50ms 劣化至 3s，同步调用占满业务线程池",
+      "resolution": "对风控调用加 500ms 超时与熔断降级 -> 线程池占用回落，45 分钟恢复",
+      "duration_minutes": 45,
+      "score": 42.1759
+    }
+  ],
+  "remediation_plan": {
+    "plan_id": "PLAN-7480CD66",
+    "root_cause_category": "db_pool_exhaustion",
+    "risk_level": "medium",
+    "approval_required": true,
+    "steps": [
+      {
+        "order": 1,
+        "action": "回滚可疑变更 CHG-20260723-0012，下线泄漏代码",
+        "action_type": "rollback_change",
+        "command": "kubectl rollout undo deployment/order-service -n prod",
+        "expected_effect": "连接泄漏源头消除，池占用逐步回落"
+      },
+      {
+        "order": 2,
+        "action": "临时调大连接池上限，缓解恢复期请求排队",
+        "action_type": "scale_pool",
+        "command": "kubectl set env deployment/order-service -n prod HIKARI_MAXIMUM_POOL_SIZE=50",
+        "expected_effect": "恢复期内连接获取超时减少"
+      },
+      {
+        "order": 3,
+        "action": "滚动重启实例，强制释放已泄漏连接",
+        "action_type": "rolling_restart",
+        "command": "kubectl rollout restart deployment/order-service -n prod",
+        "expected_effect": "存量泄漏连接全部回收，错误率归零"
+      }
+    ],
+    "rollback_plan": [
+      {
+        "order": 1,
+        "action": "若回滚后 30 分钟错误率未下降，重新发布当前版本并升级人工介入",
+        "action_type": "rollback_change",
+        "command": "kubectl rollout undo deployment/order-service -n prod --to-revision=<current>",
+        "expected_effect": "恢复初始状态，保留现场供人工排查"
+      },
+      {
+        "order": 2,
+        "action": "恢复连接池参数为原值",
+        "action_type": "config_update",
+        "command": "kubectl set env deployment/order-service -n prod HIKARI_MAXIMUM_POOL_SIZE=20",
+        "expected_effect": "配置回到基线，避免掩盖问题"
+      }
+    ],
+    "runbook_references": [
+      {
+        "id": "RB-001",
+        "title": "数据库连接池耗尽应急处置与调优规范"
+      },
+      {
+        "id": "RB-012",
+        "title": "JVM GC 停顿劣化排查手册"
+      },
+      {
+        "id": "RB-006",
+        "title": "连接池/线程池参数临时调整规范"
+      }
+    ],
+    "narrative": "建议先回滚可疑发布以止血，同时临时调大连接池上限缓解排队，再滚动重启释放已泄漏连接；全程观察错误率与池占用指标，30 分钟未恢复则升级人工介入。"
+  },
+  "execution_result": {
+    "plan_id": "PLAN-7480CD66",
+    "executed": true,
+    "status": "success",
+    "approval": {
+      "required": true,
+      "approved": true,
+      "approver": "auto-approve",
+      "decided_at": "2026-07-24T16:42:51+08:00",
+      "mode": "auto",
+      "reason": "自动审批模式（--auto-approve）"
+    },
+    "risk_assessment": {
+      "overall_risk": "medium",
+      "needs_approval": true,
+      "action_risks": [
+        {
+          "order": 1,
+          "action_type": "rollback_change",
+          "risk": "medium",
+          "whitelisted": true
+        },
+        {
+          "order": 2,
+          "action_type": "scale_pool",
+          "risk": "low",
+          "whitelisted": true
+        },
+        {
+          "order": 3,
+          "action_type": "rolling_restart",
+          "risk": "medium",
+          "whitelisted": true
+        }
+      ],
+      "impact_radius": {
+        "services": [
+          "api-gateway",
+          "order-service"
+        ],
+        "service_count": 2,
+        "severity": "critical"
+      },
+      "unknown_action_types": []
+    },
+    "actions": [
+      {
+        "order": 1,
+        "action": "回滚可疑变更 CHG-20260723-0012，下线泄漏代码",
+        "action_type": "rollback_change",
+        "command": "kubectl rollout undo deployment/order-service -n prod",
+        "idempotency_key": "bc7689bf969dd19f",
+        "status": "success",
+        "message": "动作执行成功（Mock）: rollback_change",
+        "checkpoint_id": "CKPT-427B0167",
+        "fallback": false,
+        "duration_ms": 0.05
+      },
+      {
+        "order": 2,
+        "action": "临时调大连接池上限，缓解恢复期请求排队",
+        "action_type": "scale_pool",
+        "command": "kubectl set env deployment/order-service -n prod HIKARI_MAXIMUM_POOL_SIZE=50",
+        "idempotency_key": "b2e88904934c8fa7",
+        "status": "success",
+        "message": "动作执行成功（Mock）: scale_pool",
+        "checkpoint_id": "CKPT-8AEFE6DC",
+        "fallback": false,
+        "duration_ms": 0.02
+      },
+      {
+        "order": 3,
+        "action": "滚动重启实例，强制释放已泄漏连接",
+        "action_type": "rolling_restart",
+        "command": "kubectl rollout restart deployment/order-service -n prod",
+        "idempotency_key": "fc533dd974e70743",
+        "status": "success",
+        "message": "动作执行成功（Mock）: rolling_restart",
+        "checkpoint_id": "CKPT-9AE5162F",
+        "fallback": false,
+        "duration_ms": 0.02
+      }
+    ],
+    "rollback_performed": false,
+    "rollbacks": [],
+    "notes": []
+  },
+  "verification_result": {
+    "passed": true,
+    "alerts_cleared": true,
+    "checks": [
+      {
+        "metric": "hikaricp_connections_active",
+        "service": "order-service",
+        "unit": "connections",
+        "baseline": 9.0,
+        "before_fix": 50.0,
+        "after_fix": 9.0,
+        "recovered": true
+      },
+      {
+        "metric": "http_server_error_rate_percent",
+        "service": "order-service",
+        "unit": "%",
+        "baseline": 0.2,
+        "before_fix": 18.3,
+        "after_fix": 0.2,
+        "recovered": true
+      },
+      {
+        "metric": "gateway_route_p99_latency_ms",
+        "service": "api-gateway",
+        "unit": "ms",
+        "baseline": 145.0,
+        "before_fix": 30000.0,
+        "after_fix": 150.0,
+        "recovered": true
+      }
+    ],
+    "summary": "验证通过：3 项异常指标中 3 项已回归基线，告警条件已消除"
+  },
+  "postmortem": {
+    "incident_id": "INC-1B589EC0",
+    "title": "DBConnectionPoolExhausted @ order-service",
+    "timeline": [
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "AlertAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "AlertAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "RcaAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "RcaAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "PlannerAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "PlannerAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "ExecutorAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "ExecutorAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:42:51+08:00",
+        "event": "VerifierAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:42:51.468+08:00",
+        "event": "审批通过（auto-approve / auto）"
+      }
+    ],
+    "root_cause": "order-service 数据库连接池耗尽，疑似由变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构）引入连接泄漏导致",
+    "actions_taken": [
+      "回滚可疑变更 CHG-20260723-0012，下线泄漏代码",
+      "临时调大连接池上限，缓解恢复期请求排队",
+      "滚动重启实例，强制释放已泄漏连接"
+    ],
+    "effect": "验证通过：3 项异常指标中 3 项已回归基线，告警条件已消除",
+    "improvements": [
+      "上线前压测覆盖连接池水位场景，发布流水线增加连接泄漏静态检查",
+      "为连接池使用率配置分级告警（80% 预警 / 95% 紧急），缩短发现时间"
+    ],
+    "narrative": "本次事故由订单服务发布引入的连接泄漏导致连接池耗尽，处置链路为回滚止血、临时扩容连接池、滚动重启释放存量连接，修复后错误率与池占用均回归基线；后续需在发布流水线增加连接泄漏检查与连接池水位分级告警，缩短同类问题发现时间。",
+    "case_id": "CASE-5CBEC871"
+  },
+  "degraded": false,
+  "degradation_notes": [],
+  "timeline": [
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "AlertAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "AlertAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "RcaAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "RcaAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "PlannerAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "PlannerAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "ExecutorAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "ExecutorAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "VerifierAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:42:51+08:00",
+      "event": "VerifierAgent 结束"
+    }
+  ]
+}

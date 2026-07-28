@@ -1,0 +1,59 @@
+{
+  "metrics": [
+    {
+      "name": "user_service_client_p99_latency_ms",
+      "service": "api-gateway",
+      "unit": "ms",
+      "labels": {"upstream": "user-service", "zone": "cn-hangzhou-a", "measured_at": "client", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T11:40:00+08:00", "value": 1120},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 430},
+        {"timestamp": "2026-07-23T11:50:00+08:00", "value": 150},
+        {"timestamp": "2026-07-23T11:55:00+08:00", "value": 95},
+        {"timestamp": "2026-07-23T12:05:00+08:00", "value": 86},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 83},
+        {"timestamp": "2026-07-23T12:25:00+08:00", "value": 81}
+      ]
+    },
+    {
+      "name": "user_service_server_p99_latency_ms",
+      "service": "user-service",
+      "unit": "ms",
+      "labels": {"measured_at": "server", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T11:40:00+08:00", "value": 42},
+        {"timestamp": "2026-07-23T11:50:00+08:00", "value": 41},
+        {"timestamp": "2026-07-23T12:00:00+08:00", "value": 40},
+        {"timestamp": "2026-07-23T12:10:00+08:00", "value": 42},
+        {"timestamp": "2026-07-23T12:25:00+08:00", "value": 41}
+      ]
+    },
+    {
+      "name": "gateway_upstream_timeout_total",
+      "service": "api-gateway",
+      "unit": "count/5min",
+      "labels": {"route": "/api/user/*", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T11:40:00+08:00", "value": 32},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 11},
+        {"timestamp": "2026-07-23T11:50:00+08:00", "value": 3},
+        {"timestamp": "2026-07-23T11:55:00+08:00", "value": 1},
+        {"timestamp": "2026-07-23T12:05:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T12:25:00+08:00", "value": 0}
+      ]
+    },
+    {
+      "name": "user_service_cpu_usage_percent",
+      "service": "user-service",
+      "unit": "%",
+      "labels": {"phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T11:40:00+08:00", "value": 32},
+        {"timestamp": "2026-07-23T11:55:00+08:00", "value": 34},
+        {"timestamp": "2026-07-23T12:10:00+08:00", "value": 31},
+        {"timestamp": "2026-07-23T12:25:00+08:00", "value": 30}
+      ]
+    }
+  ]
+}

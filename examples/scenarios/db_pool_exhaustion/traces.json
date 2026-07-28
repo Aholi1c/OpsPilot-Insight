@@ -1,0 +1,74 @@
+{
+  "traces": [
+    {
+      "trace_id": "8c1f2a9d0e3b4576a1d2c3e4f5061728",
+      "spans": [
+        {
+          "span_id": "gw01a2b3c4d5e6f7",
+          "parent_span_id": null,
+          "service": "api-gateway",
+          "operation": "GET /api/orders/list",
+          "start_time": "2026-07-23T09:32:08.100+08:00",
+          "duration_ms": 30045,
+          "status": "ERROR",
+          "tags": {"http.status_code": 504, "peer.address": "order-service:8080"}
+        },
+        {
+          "span_id": "os01b2c3d4e5f6a8",
+          "parent_span_id": "gw01a2b3c4d5e6f7",
+          "service": "order-service",
+          "operation": "OrderController.listOrders",
+          "start_time": "2026-07-23T09:32:08.112+08:00",
+          "duration_ms": 30021,
+          "status": "ERROR",
+          "tags": {"error.kind": "SQLTransientConnectionException"}
+        },
+        {
+          "span_id": "db01c2d3e4f5a6b9",
+          "parent_span_id": "os01b2c3d4e5f6a8",
+          "service": "order-service",
+          "operation": "HikariPool.getConnection",
+          "start_time": "2026-07-23T09:32:08.115+08:00",
+          "duration_ms": 30000,
+          "status": "ERROR",
+          "tags": {"db.pool": "HikariPool-1", "error.message": "Connection is not available, request timed out after 30000ms"}
+        }
+      ]
+    },
+    {
+      "trace_id": "7b0e1f2a3c4d5e6f8091a2b3c4d5e6f7",
+      "spans": [
+        {
+          "span_id": "gw02a3b4c5d6e7f8",
+          "parent_span_id": null,
+          "service": "api-gateway",
+          "operation": "GET /api/orders/detail",
+          "start_time": "2026-07-23T07:50:12.000+08:00",
+          "duration_ms": 18,
+          "status": "OK",
+          "tags": {"http.status_code": 200}
+        },
+        {
+          "span_id": "os02b3c4d5e6f7a9",
+          "parent_span_id": "gw02a3b4c5d6e7f8",
+          "service": "order-service",
+          "operation": "OrderController.getDetail",
+          "start_time": "2026-07-23T07:50:12.004+08:00",
+          "duration_ms": 12,
+          "status": "OK",
+          "tags": {}
+        },
+        {
+          "span_id": "sq02c3d4e5f6a7b0",
+          "parent_span_id": "os02b3c4d5e6f7a9",
+          "service": "mysql-orders",
+          "operation": "SELECT orders WHERE id = ?",
+          "start_time": "2026-07-23T07:50:12.007+08:00",
+          "duration_ms": 4,
+          "status": "OK",
+          "tags": {"db.type": "mysql"}
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "metrics": [
+    {
+      "name": "hikaricp_connections_active",
+      "service": "order-service",
+      "unit": "connections",
+      "labels": {"pool": "HikariPool-1", "max": "50", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 50},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 38},
+        {"timestamp": "2026-07-23T10:15:00+08:00", "value": 24},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 15},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 11},
+        {"timestamp": "2026-07-23T10:40:00+08:00", "value": 10},
+        {"timestamp": "2026-07-23T10:50:00+08:00", "value": 9}
+      ]
+    },
+    {
+      "name": "http_server_error_rate_percent",
+      "service": "order-service",
+      "unit": "%",
+      "labels": {"code": "5xx", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 17.2},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 9.5},
+        {"timestamp": "2026-07-23T10:15:00+08:00", "value": 3.1},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 0.8},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 0.3},
+        {"timestamp": "2026-07-23T10:40:00+08:00", "value": 0.2},
+        {"timestamp": "2026-07-23T10:50:00+08:00", "value": 0.2}
+      ]
+    },
+    {
+      "name": "gateway_route_p99_latency_ms",
+      "service": "api-gateway",
+      "unit": "ms",
+      "labels": {"route": "/api/orders/*", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 26000},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 8400},
+        {"timestamp": "2026-07-23T10:15:00+08:00", "value": 980},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 320},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 170},
+        {"timestamp": "2026-07-23T10:40:00+08:00", "value": 155},
+        {"timestamp": "2026-07-23T10:50:00+08:00", "value": 150}
+      ]
+    },
+    {
+      "name": "mysql_threads_running",
+      "service": "mysql-orders",
+      "unit": "threads",
+      "labels": {"instance": "mysql-orders-0", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 12},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 12},
+        {"timestamp": "2026-07-23T10:35:00+08:00", "value": 11},
+        {"timestamp": "2026-07-23T10:50:00+08:00", "value": 12}
+      ]
+    }
+  ]
+}

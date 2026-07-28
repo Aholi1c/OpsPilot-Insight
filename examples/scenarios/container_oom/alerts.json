@@ -1,0 +1,78 @@
+{
+  "alerts": [
+    {
+      "fingerprint": "d05f7a9b2c386e44",
+      "status": "firing",
+      "labels": {
+        "alertname": "KubeContainerOOMKilled",
+        "severity": "critical",
+        "service": "payment-service",
+        "namespace": "prod",
+        "pod": "payment-service-7d9f8c6b5-w8jql",
+        "container": "payment-service",
+        "team": "pay"
+      },
+      "annotations": {
+        "summary": "payment-service 容器被 OOMKilled",
+        "description": "容器 payment-service 因超出内存 limit (4Gi) 被内核终止，近 30 分钟已发生 6 次"
+      },
+      "startsAt": "2026-07-23T10:15:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=kube_pod_container_status_last_terminated_reason"
+    },
+    {
+      "fingerprint": "d05f7a9b2c386e44",
+      "status": "firing",
+      "labels": {
+        "alertname": "KubeContainerOOMKilled",
+        "severity": "critical",
+        "service": "payment-service",
+        "namespace": "prod",
+        "pod": "payment-service-7d9f8c6b5-w8jql",
+        "container": "payment-service",
+        "team": "pay"
+      },
+      "annotations": {
+        "summary": "payment-service 容器被 OOMKilled",
+        "description": "容器 payment-service 因超出内存 limit (4Gi) 被内核终止（重复推送）"
+      },
+      "startsAt": "2026-07-23T10:17:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=kube_pod_container_status_last_terminated_reason"
+    },
+    {
+      "fingerprint": "e16a8b0c3d497f55",
+      "status": "firing",
+      "labels": {
+        "alertname": "KubePodCrashLooping",
+        "severity": "critical",
+        "service": "payment-service",
+        "namespace": "prod",
+        "pod": "payment-service-7d9f8c6b5-w8jql",
+        "team": "pay"
+      },
+      "annotations": {
+        "summary": "payment-service Pod 进入 CrashLoopBackOff",
+        "description": "Pod payment-service-7d9f8c6b5-w8jql 近 30 分钟重启 6 次，当前状态 CrashLoopBackOff"
+      },
+      "startsAt": "2026-07-23T10:18:20+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=kube_pod_container_status_restarts_total"
+    },
+    {
+      "fingerprint": "f27b9c1d4e508a66",
+      "status": "firing",
+      "labels": {
+        "alertname": "PaymentHighErrorRate",
+        "severity": "warning",
+        "service": "api-gateway",
+        "namespace": "prod",
+        "instance": "api-gateway-5b8c6d7e9-p4nvz:8443",
+        "team": "platform"
+      },
+      "annotations": {
+        "summary": "api-gateway 支付路由错误率升高",
+        "description": "路由 /api/pay/* 近 5 分钟 5xx 错误率 21.7%（上游连接被拒绝），阈值 5%"
+      },
+      "startsAt": "2026-07-23T10:19:05+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=gateway_route_error_rate"
+    }
+  ]
+}

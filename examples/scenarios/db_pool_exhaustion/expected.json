@@ -1,0 +1,11 @@
+{
+  "description": "db_pool_exhaustion 场景的人工校准标准答案（Golden Dataset expected 优先来源）",
+  "root_cause_keywords": ["连接池", "泄漏", "order-service"],
+  "related_change_id": "CHG-20260723-0012",
+  "expected_action_types": ["rollback_change", "scale_pool", "rolling_restart"],
+  "expected_execution_status": ["success"],
+  "expected_verification": {
+    "passed": true,
+    "alerts_cleared": true
+  }
+}

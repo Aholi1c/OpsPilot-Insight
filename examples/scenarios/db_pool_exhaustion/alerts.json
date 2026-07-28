@@ -1,0 +1,78 @@
+{
+  "alerts": [
+    {
+      "fingerprint": "6f2a9c1d3e8b4a70",
+      "status": "firing",
+      "labels": {
+        "alertname": "DBConnectionPoolExhausted",
+        "severity": "critical",
+        "service": "order-service",
+        "namespace": "prod",
+        "instance": "order-service-6c9f7b4d5-x2kqm:8080",
+        "pool": "HikariPool-1",
+        "team": "trade"
+      },
+      "annotations": {
+        "summary": "order-service 数据库连接池耗尽",
+        "description": "HikariPool-1 活跃连接数已达上限 50/50 持续超过 5 分钟，连接获取超时率 > 90%"
+      },
+      "startsAt": "2026-07-23T09:32:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=hikaricp_connections_active"
+    },
+    {
+      "fingerprint": "6f2a9c1d3e8b4a70",
+      "status": "firing",
+      "labels": {
+        "alertname": "DBConnectionPoolExhausted",
+        "severity": "critical",
+        "service": "order-service",
+        "namespace": "prod",
+        "instance": "order-service-6c9f7b4d5-x2kqm:8080",
+        "pool": "HikariPool-1",
+        "team": "trade"
+      },
+      "annotations": {
+        "summary": "order-service 数据库连接池耗尽",
+        "description": "HikariPool-1 活跃连接数已达上限 50/50 持续超过 5 分钟，连接获取超时率 > 90%（重复推送）"
+      },
+      "startsAt": "2026-07-23T09:34:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=hikaricp_connections_active"
+    },
+    {
+      "fingerprint": "b83d5e7f0a164c22",
+      "status": "firing",
+      "labels": {
+        "alertname": "HighErrorRate",
+        "severity": "critical",
+        "service": "order-service",
+        "namespace": "prod",
+        "instance": "order-service-6c9f7b4d5-x2kqm:8080",
+        "team": "trade"
+      },
+      "annotations": {
+        "summary": "order-service 接口错误率超过 15%",
+        "description": "近 5 分钟 HTTP 5xx 错误率 18.3%，阈值 5%"
+      },
+      "startsAt": "2026-07-23T09:33:30+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=http_server_errors_ratio"
+    },
+    {
+      "fingerprint": "c94e6f8a1b275d33",
+      "status": "firing",
+      "labels": {
+        "alertname": "APIHighLatency",
+        "severity": "warning",
+        "service": "api-gateway",
+        "namespace": "prod",
+        "instance": "api-gateway-5b8c6d7e9-p4nvz:8443",
+        "team": "platform"
+      },
+      "annotations": {
+        "summary": "api-gateway 订单路由 P99 延迟超阈值",
+        "description": "路由 /api/orders/* 的 P99 延迟 30s（触发上游 504），阈值 2s"
+      },
+      "startsAt": "2026-07-23T09:35:10+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=gateway_route_p99"
+    }
+  ]
+}

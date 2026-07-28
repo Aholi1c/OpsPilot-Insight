@@ -1,0 +1,61 @@
+{
+  "metrics": [
+    {
+      "name": "container_memory_working_set_bytes",
+      "service": "payment-service",
+      "unit": "MiB",
+      "labels": {"pod": "payment-service-7d9f8c6b5-x2mkp", "limit_mib": "6144", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 2350},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 1620},
+        {"timestamp": "2026-07-23T11:15:00+08:00", "value": 1310},
+        {"timestamp": "2026-07-23T11:30:00+08:00", "value": 1240},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 1270},
+        {"timestamp": "2026-07-23T12:00:00+08:00", "value": 1220},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 1250}
+      ]
+    },
+    {
+      "name": "jvm_heap_used_bytes",
+      "service": "payment-service",
+      "unit": "MiB",
+      "labels": {"area": "heap", "xmx_mib": "3276", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 1750},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 1180},
+        {"timestamp": "2026-07-23T11:15:00+08:00", "value": 960},
+        {"timestamp": "2026-07-23T11:30:00+08:00", "value": 905},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 930},
+        {"timestamp": "2026-07-23T12:00:00+08:00", "value": 895},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 910}
+      ]
+    },
+    {
+      "name": "kube_pod_container_status_restarts_total",
+      "service": "payment-service",
+      "unit": "restarts",
+      "labels": {"pod": "payment-service-7d9f8c6b5-x2mkp", "phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T11:15:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 0}
+      ]
+    },
+    {
+      "name": "payment_success_rate_percent",
+      "service": "payment-service",
+      "unit": "%",
+      "labels": {"phase": "after_fix"},
+      "points": [
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 88.4},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 96.7},
+        {"timestamp": "2026-07-23T11:15:00+08:00", "value": 99.2},
+        {"timestamp": "2026-07-23T11:30:00+08:00", "value": 99.8},
+        {"timestamp": "2026-07-23T11:45:00+08:00", "value": 99.9},
+        {"timestamp": "2026-07-23T12:00:00+08:00", "value": 99.9},
+        {"timestamp": "2026-07-23T12:15:00+08:00", "value": 99.9}
+      ]
+    }
+  ]
+}

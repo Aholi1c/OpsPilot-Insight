@@ -1,0 +1,60 @@
+{
+  "logs": [
+    {
+      "timestamp": "2026-07-23T09:30:41.208+08:00",
+      "level": "WARN",
+      "service": "order-service",
+      "logger": "com.zaxxer.hikari.pool.HikariPool",
+      "message": "HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=52s643ms)."
+    },
+    {
+      "timestamp": "2026-07-23T09:31:55.914+08:00",
+      "level": "ERROR",
+      "service": "order-service",
+      "logger": "com.zaxxer.hikari.pool.HikariPool",
+      "message": "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+    },
+    {
+      "timestamp": "2026-07-23T09:32:02.377+08:00",
+      "level": "ERROR",
+      "service": "order-service",
+      "logger": "com.example.order.dao.OrderBatchQueryDao",
+      "message": "java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms. at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)"
+    },
+    {
+      "timestamp": "2026-07-23T09:32:08.541+08:00",
+      "level": "ERROR",
+      "service": "order-service",
+      "logger": "com.example.order.controller.OrderController",
+      "message": "GET /orders/batch failed: could not acquire JDBC Connection from pool HikariPool-1 within 30000ms, traceId=8c1f2a9d0e3b4576"
+    },
+    {
+      "timestamp": "2026-07-23T09:32:15.023+08:00",
+      "level": "WARN",
+      "service": "order-service",
+      "logger": "com.zaxxer.hikari.pool.HikariPool",
+      "message": "HikariPool-1 - connection pool stats (total=50, active=50, idle=0, waiting=137)"
+    },
+    {
+      "timestamp": "2026-07-23T09:33:47.660+08:00",
+      "level": "ERROR",
+      "service": "api-gateway",
+      "logger": "gateway.access",
+      "message": "GET /api/orders/list responded 504 Gateway Timeout, upstream order-service exceeded proxy deadline 30s, client=112.96.14.88"
+    },
+    {
+      "timestamp": "2026-07-23T09:34:12.129+08:00",
+      "level": "ERROR",
+      "service": "order-service",
+      "logger": "com.zaxxer.hikari.pool.HikariPool",
+      "message": "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+    },
+    {
+      "timestamp": "2026-07-23T09:34:55.802+08:00",
+      "level": "INFO",
+      "service": "inventory-service",
+      "logger": "com.example.inventory.web",
+      "message": "GET /inventory/stock/10023 200 in 12ms"
+    }
+  ]
+}

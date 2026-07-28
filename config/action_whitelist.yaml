@@ -1,0 +1,27 @@
+# ExecutorAgent 动作白名单
+# 只有此清单内的动作类型允许被执行；不在白名单的动作一律拒绝并记录审计事件。
+# 值为该动作类型的说明与默认风险等级（供 RiskGuard 参考）。
+# 本文件由 src/opspilot/config.py 的轻量 YAML 子集解析器加载。
+
+whitelist:
+  rollback_change:
+    description: 回滚发布/配置/网络变更至上一稳定版本
+    default_risk: medium
+  scale_pool:
+    description: 调整连接池/线程池等资源池参数（须登记原值）
+    default_risk: low
+  rolling_restart:
+    description: 滚动重启服务实例（须确认副本数与优雅停机配置）
+    default_risk: medium
+  config_update:
+    description: 通过配置中心/环境变量更新运行时配置
+    default_risk: medium
+  traffic_switch:
+    description: 网关流量切换/可用区切流（须确认目标区容量）
+    default_risk: medium
+  diagnostic_capture:
+    description: 采集诊断数据（heap dump / 日志快照等只读留证操作）
+    default_risk: low
+  manual_followup:
+    description: 创建人工跟进任务（不直接操作生产资源）
+    default_risk: low

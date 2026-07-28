@@ -1,0 +1,507 @@
+{
+  "report_id": "RPT-196686B5",
+  "scenario": "container_oom",
+  "generated_at": "2026-07-24T16:43:00+08:00",
+  "trace_id": "a681d0df175540dd8bb5251137a56000",
+  "incident": {
+    "incident_id": "INC-6E3805E8",
+    "title": "KubeContainerOOMKilled @ payment-service",
+    "severity": "critical",
+    "created_at": "2026-07-24T16:43:00+08:00",
+    "raw_alert_count": 4,
+    "deduped_alert_count": 3,
+    "alert_groups": [
+      {
+        "alertname": "KubeContainerOOMKilled",
+        "service": "payment-service",
+        "severity": "critical",
+        "count": 1,
+        "first_starts_at": "2026-07-23T10:15:00+08:00",
+        "summary": "payment-service 容器被 OOMKilled"
+      },
+      {
+        "alertname": "KubePodCrashLooping",
+        "service": "payment-service",
+        "severity": "critical",
+        "count": 1,
+        "first_starts_at": "2026-07-23T10:18:20+08:00",
+        "summary": "payment-service Pod 进入 CrashLoopBackOff"
+      },
+      {
+        "alertname": "PaymentHighErrorRate",
+        "service": "api-gateway",
+        "severity": "warning",
+        "count": 1,
+        "first_starts_at": "2026-07-23T10:19:05+08:00",
+        "summary": "api-gateway 支付路由错误率升高"
+      }
+    ],
+    "affected_services": [
+      "api-gateway",
+      "payment-service"
+    ],
+    "impact": {
+      "affected_services": [
+        "api-gateway",
+        "payment-service"
+      ],
+      "upstream_impacted": [],
+      "downstream_dependencies": [
+        "mysql-payments"
+      ],
+      "blast_radius": [
+        "api-gateway",
+        "payment-service"
+      ],
+      "blast_radius_size": 2,
+      "user_facing": true,
+      "user_impact": "故障已沿调用链传播至入口服务 ['api-gateway']，用户侧可感知"
+    },
+    "summary": "payment-service 容器内存持续增长触发 OOMKilled 并进入 CrashLoopBackOff，支付成功率下降，用户侧出现支付失败与重试，属 P1 级业务受损事件。"
+  },
+  "root_cause_candidates": [
+    {
+      "category": "container_oom",
+      "hypothesis": "payment-service 容器内存持续增长触发 OOMKilled，疑似由变更 CHG-20260723-0021（支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询）引入内存膨胀导致",
+      "service": "payment-service",
+      "confidence": 0.95,
+      "evidences": [
+        {
+          "source": "logs",
+          "strength": "strong",
+          "description": "命中 container_oom 模式的异常日志 5 条",
+          "details": [
+            "[payment-service] java.lang.OutOfMemoryError: Java heap space at java.base/java.util.concurrent.ConcurrentHashMap.putVal(ConcurrentHashMap.java:1099)",
+            "[payment-service] java invoked oom-killer: gfp_mask=0x14200ca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=968; Memory cgroup out of memory: Killed process 23847 (java) total-vm:6291456kB",
+            "[payment-service] Container payment-service in pod payment-service-7d9f8c6b5-w8jql was OOMKilled, lastState: terminated, reason: OOMKilled, exitCode: 137"
+          ]
+        },
+        {
+          "source": "metrics",
+          "strength": "strong",
+          "description": "检出 3 项异常指标，其中 3 项与该模式直接相关",
+          "details": [
+            "container_memory_working_set_bytes(payment-service): 1606.67 -> 3956.67 MiB",
+            "jvm_heap_used_bytes(payment-service): 1273.33 -> 3173.33 MiB",
+            "kube_pod_container_status_restarts_total(payment-service): 0.33 -> 4.0 restarts"
+          ]
+        },
+        {
+          "source": "traces",
+          "strength": "strong",
+          "description": "受影响服务上定位到 2 个错误/慢 span",
+          "details": [
+            "api-gateway.POST /api/pay/create: 63ms [ERROR]",
+            "payment-service.PaymentController.create: 5ms [ERROR]"
+          ]
+        },
+        {
+          "source": "changes",
+          "strength": "strong",
+          "description": "告警前 4h 内存在关联变更 CHG-20260723-0021（支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询，发布单 REL-20260723-8907）",
+          "details": [
+            "CHG-20260723-0021 @ 2026-07-23T07:40:00+08:00 by liuyang"
+          ]
+        }
+      ],
+      "related_change_id": "CHG-20260723-0021"
+    },
+    {
+      "category": "generic_dependency",
+      "hypothesis": "下游依赖抖动引发的连锁反应（低置信度备选假设，主假设不成立时排查）",
+      "service": "api-gateway",
+      "confidence": 0.15,
+      "evidences": [
+        {
+          "source": "logs",
+          "strength": "weak",
+          "description": "异常日志与主假设模式高度重合，独立信号不足",
+          "details": []
+        },
+        {
+          "source": "metrics",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的指标信号",
+          "details": []
+        },
+        {
+          "source": "traces",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的链路信号",
+          "details": []
+        },
+        {
+          "source": "changes",
+          "strength": "missing",
+          "description": "无独立指向依赖抖动的变更记录",
+          "details": []
+        }
+      ],
+      "related_change_id": null
+    }
+  ],
+  "selected_root_cause": {
+    "category": "container_oom",
+    "hypothesis": "payment-service 容器内存持续增长触发 OOMKilled，疑似由变更 CHG-20260723-0021（支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询）引入内存膨胀导致",
+    "service": "payment-service",
+    "confidence": 0.95,
+    "evidences": [
+      {
+        "source": "logs",
+        "strength": "strong",
+        "description": "命中 container_oom 模式的异常日志 5 条",
+        "details": [
+          "[payment-service] java.lang.OutOfMemoryError: Java heap space at java.base/java.util.concurrent.ConcurrentHashMap.putVal(ConcurrentHashMap.java:1099)",
+          "[payment-service] java invoked oom-killer: gfp_mask=0x14200ca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=968; Memory cgroup out of memory: Killed process 23847 (java) total-vm:6291456kB",
+          "[payment-service] Container payment-service in pod payment-service-7d9f8c6b5-w8jql was OOMKilled, lastState: terminated, reason: OOMKilled, exitCode: 137"
+        ]
+      },
+      {
+        "source": "metrics",
+        "strength": "strong",
+        "description": "检出 3 项异常指标，其中 3 项与该模式直接相关",
+        "details": [
+          "container_memory_working_set_bytes(payment-service): 1606.67 -> 3956.67 MiB",
+          "jvm_heap_used_bytes(payment-service): 1273.33 -> 3173.33 MiB",
+          "kube_pod_container_status_restarts_total(payment-service): 0.33 -> 4.0 restarts"
+        ]
+      },
+      {
+        "source": "traces",
+        "strength": "strong",
+        "description": "受影响服务上定位到 2 个错误/慢 span",
+        "details": [
+          "api-gateway.POST /api/pay/create: 63ms [ERROR]",
+          "payment-service.PaymentController.create: 5ms [ERROR]"
+        ]
+      },
+      {
+        "source": "changes",
+        "strength": "strong",
+        "description": "告警前 4h 内存在关联变更 CHG-20260723-0021（支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询，发布单 REL-20260723-8907）",
+        "details": [
+          "CHG-20260723-0021 @ 2026-07-23T07:40:00+08:00 by liuyang"
+        ]
+      }
+    ],
+    "related_change_id": "CHG-20260723-0021"
+  },
+  "similar_cases": [
+    {
+      "id": "CASE-2025-002",
+      "title": "支付服务本地缓存无上限导致 OOMKilled",
+      "category": "container_oom",
+      "symptoms": "工作集内存 3 小时线性增长至 4Gi limit，Pod 被 OOMKill 后 CrashLoopBackOff，支付成功率跌至 80%",
+      "root_cause": "本地缓存 maximumSize 配置被误删，缓存条目无限增长",
+      "resolution": "回滚配置变更 -> 临时上调 limit 至 6Gi -> 采集 heap dump 确认缓存对象 -> 滚动重启，55 分钟恢复",
+      "duration_minutes": 55,
+      "score": 118.5837
+    },
+    {
+      "id": "CASE-5CBEC871",
+      "title": "DBConnectionPoolExhausted @ order-service",
+      "category": "db_pool_exhaustion",
+      "symptoms": "order-service 数据库连接池耗尽，订单查询/下单接口大面积超时报错，并经 api-gateway 以 504 形式扩散至用户侧，属 P1 级业务受损事件。",
+      "root_cause": "order-service 数据库连接池耗尽，疑似由变更 CHG-20260723-0012（订单服务 v2.14.0 发布：订单批量查询接口重构）引入连接泄漏导致",
+      "resolution": "回滚可疑变更 CHG-20260723-0012，下线泄漏代码；临时调大连接池上限，缓解恢复期请求排队；滚动重启实例，强制释放已泄漏连接",
+      "duration_minutes": 1,
+      "score": 68.4673
+    },
+    {
+      "id": "CASE-2025-010",
+      "title": "灰度配置误推全量导致风控规则击穿",
+      "category": "config_update",
+      "symptoms": "风控通过率异常升高，可疑交易拦截量骤降 90%",
+      "root_cause": "配置平台灰度开关误操作，测试规则集被全量推送至生产",
+      "resolution": "按变更前快照一键回滚配置 -> 追加配置发布双人复核流程，15 分钟恢复",
+      "duration_minutes": 15,
+      "score": 35.2126
+    }
+  ],
+  "remediation_plan": {
+    "plan_id": "PLAN-C5BC54A9",
+    "root_cause_category": "container_oom",
+    "risk_level": "medium",
+    "approval_required": true,
+    "steps": [
+      {
+        "order": 1,
+        "action": "回滚可疑变更 CHG-20260723-0021，移除内存膨胀源",
+        "action_type": "rollback_change",
+        "command": "kubectl rollout undo deployment/payment-service -n prod",
+        "expected_effect": "内存增长曲线恢复平稳"
+      },
+      {
+        "order": 2,
+        "action": "临时上调容器内存 limit，提供恢复缓冲",
+        "action_type": "config_update",
+        "command": "kubectl patch deployment payment-service -n prod --patch '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"payment-service\",\"resources\":{\"limits\":{\"memory\":\"6Gi\"}}}]}}}}'",
+        "expected_effect": "短期内不再触发 OOMKilled"
+      },
+      {
+        "order": 3,
+        "action": "重启后采集 heap dump 留存证据，供复盘分析",
+        "action_type": "diagnostic_capture",
+        "command": "kubectl exec deploy/payment-service -n prod -- jmap -dump:live,file=/tmp/heap.hprof 1",
+        "expected_effect": "获得内存快照，定位具体泄漏对象"
+      }
+    ],
+    "rollback_plan": [
+      {
+        "order": 1,
+        "action": "若回滚后仍持续 OOM，恢复内存 limit 原值并升级人工介入",
+        "action_type": "config_update",
+        "command": "kubectl patch deployment payment-service -n prod --patch '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"payment-service\",\"resources\":{\"limits\":{\"memory\":\"4Gi\"}}}]}}}}'",
+        "expected_effect": "配置回到基线"
+      }
+    ],
+    "runbook_references": [
+      {
+        "id": "RB-002",
+        "title": "容器 OOMKilled 应急处置手册"
+      },
+      {
+        "id": "RB-012",
+        "title": "JVM GC 停顿劣化排查手册"
+      },
+      {
+        "id": "RB-003",
+        "title": "跨可用区网络延迟劣化与 ACL 排查手册"
+      }
+    ],
+    "narrative": "建议回滚引入缓存配置错误的发布，并临时上调内存 limit 提供缓冲，重启后采集heap dump 留存证据；观察内存曲线与重启次数，确认不再触发 OOMKilled。"
+  },
+  "execution_result": {
+    "plan_id": "PLAN-C5BC54A9",
+    "executed": true,
+    "status": "success",
+    "approval": {
+      "required": true,
+      "approved": true,
+      "approver": "auto-approve",
+      "decided_at": "2026-07-24T16:43:00+08:00",
+      "mode": "auto",
+      "reason": "自动审批模式（--auto-approve）"
+    },
+    "risk_assessment": {
+      "overall_risk": "medium",
+      "needs_approval": true,
+      "action_risks": [
+        {
+          "order": 1,
+          "action_type": "rollback_change",
+          "risk": "medium",
+          "whitelisted": true
+        },
+        {
+          "order": 2,
+          "action_type": "config_update",
+          "risk": "medium",
+          "whitelisted": true
+        },
+        {
+          "order": 3,
+          "action_type": "diagnostic_capture",
+          "risk": "low",
+          "whitelisted": true
+        }
+      ],
+      "impact_radius": {
+        "services": [
+          "api-gateway",
+          "payment-service"
+        ],
+        "service_count": 2,
+        "severity": "critical"
+      },
+      "unknown_action_types": []
+    },
+    "actions": [
+      {
+        "order": 1,
+        "action": "回滚可疑变更 CHG-20260723-0021，移除内存膨胀源",
+        "action_type": "rollback_change",
+        "command": "kubectl rollout undo deployment/payment-service -n prod",
+        "idempotency_key": "b956490af64edd97",
+        "status": "success",
+        "message": "动作执行成功（Mock）: rollback_change",
+        "checkpoint_id": "CKPT-70EDC4F2",
+        "fallback": false,
+        "duration_ms": 0.03
+      },
+      {
+        "order": 2,
+        "action": "临时上调容器内存 limit，提供恢复缓冲",
+        "action_type": "config_update",
+        "command": "kubectl patch deployment payment-service -n prod --patch '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"payment-service\",\"resources\":{\"limits\":{\"memory\":\"6Gi\"}}}]}}}}'",
+        "idempotency_key": "90ae9540c5e09cef",
+        "status": "success",
+        "message": "动作执行成功（Mock）: config_update",
+        "checkpoint_id": "CKPT-604E2020",
+        "fallback": false,
+        "duration_ms": 0.02
+      },
+      {
+        "order": 3,
+        "action": "重启后采集 heap dump 留存证据，供复盘分析",
+        "action_type": "diagnostic_capture",
+        "command": "kubectl exec deploy/payment-service -n prod -- jmap -dump:live,file=/tmp/heap.hprof 1",
+        "idempotency_key": "06c33cc6b2ae4e00",
+        "status": "success",
+        "message": "动作执行成功（Mock）: diagnostic_capture",
+        "checkpoint_id": "CKPT-33CE89E1",
+        "fallback": false,
+        "duration_ms": 0.02
+      }
+    ],
+    "rollback_performed": false,
+    "rollbacks": [],
+    "notes": []
+  },
+  "verification_result": {
+    "passed": true,
+    "alerts_cleared": true,
+    "checks": [
+      {
+        "metric": "container_memory_working_set_bytes",
+        "service": "payment-service",
+        "unit": "MiB",
+        "baseline": 1180.0,
+        "before_fix": 4090.0,
+        "after_fix": 1250.0,
+        "recovered": true
+      },
+      {
+        "metric": "jvm_heap_used_bytes",
+        "service": "payment-service",
+        "unit": "MiB",
+        "baseline": 890.0,
+        "before_fix": 3260.0,
+        "after_fix": 910.0,
+        "recovered": true
+      },
+      {
+        "metric": "kube_pod_container_status_restarts_total",
+        "service": "payment-service",
+        "unit": "restarts",
+        "baseline": 0.0,
+        "before_fix": 6.0,
+        "after_fix": 0.0,
+        "recovered": true
+      },
+      {
+        "metric": "payment_success_rate_percent",
+        "service": "payment-service",
+        "unit": "%",
+        "baseline": 99.9,
+        "before_fix": 78.3,
+        "after_fix": 99.9,
+        "recovered": true
+      }
+    ],
+    "summary": "验证通过：4 项异常指标中 4 项已回归基线，告警条件已消除"
+  },
+  "postmortem": {
+    "incident_id": "INC-6E3805E8",
+    "title": "KubeContainerOOMKilled @ payment-service",
+    "timeline": [
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "AlertAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "AlertAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "RcaAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "RcaAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "PlannerAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "PlannerAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "ExecutorAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "ExecutorAgent 结束"
+      },
+      {
+        "time": "2026-07-24T16:43:00+08:00",
+        "event": "VerifierAgent 开始"
+      },
+      {
+        "time": "2026-07-24T16:43:00.214+08:00",
+        "event": "审批通过（auto-approve / auto）"
+      }
+    ],
+    "root_cause": "payment-service 容器内存持续增长触发 OOMKilled，疑似由变更 CHG-20260723-0021（支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询）引入内存膨胀导致",
+    "actions_taken": [
+      "回滚可疑变更 CHG-20260723-0021，移除内存膨胀源",
+      "临时上调容器内存 limit，提供恢复缓冲",
+      "重启后采集 heap dump 留存证据，供复盘分析"
+    ],
+    "effect": "验证通过：4 项异常指标中 4 项已回归基线，告警条件已消除",
+    "improvements": [
+      "发布流水线增加内存基线对比，容器内存 limit 变更纳入容量评审",
+      "为容器 WorkingSet/limit 比例配置预警，OOMKilled 事件自动关联最近变更"
+    ],
+    "narrative": "本次事故由支付服务本地缓存配置错误引发内存膨胀至 OOMKilled，处置链路为回滚变更、临时上调内存 limit、采集 heap dump 留证，修复后内存曲线平稳、支付成功率恢复；后续需将内存 limit 变更纳入容量评审并配置内存比例预警。",
+    "case_id": "CASE-48936CDD"
+  },
+  "degraded": false,
+  "degradation_notes": [],
+  "timeline": [
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "AlertAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "AlertAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "RcaAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "RcaAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "PlannerAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "PlannerAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "ExecutorAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "ExecutorAgent 结束"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "VerifierAgent 开始"
+    },
+    {
+      "time": "2026-07-24T16:43:00+08:00",
+      "event": "VerifierAgent 结束"
+    }
+  ]
+}

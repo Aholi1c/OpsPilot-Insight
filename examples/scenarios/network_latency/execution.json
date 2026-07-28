@@ -1,0 +1,10 @@
+{
+  "description": "network_latency 场景执行剧本：第一个动作（回滚网络变更）注定失败，用于演示 ExecutorAgent 的『执行失败 -> 自动回滚检查点 -> 备选动作（切流）成功』完整链路。",
+  "scripted_results": [
+    {
+      "match": {"order": 1, "action_type": "rollback_change"},
+      "status": "failed",
+      "message": "RevokeSecurityGroup 被拒绝（Forbidden）：目标安全组规则已被网络防火墙基线策略锁定，需网络团队解锁后方可回滚"
+    }
+  ]
+}

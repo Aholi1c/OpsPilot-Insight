@@ -1,0 +1,253 @@
+{
+  "generated_at": "2026-07-24T16:43:00+08:00",
+  "judge_name": "mock",
+  "sample_count": 3,
+  "overall_score": 100.0,
+  "all_passed_85": true,
+  "results": [
+    {
+      "case_id": "GOLDEN-container_oom",
+      "scenario": "container_oom",
+      "total_score": 100.0,
+      "rules": {
+        "root_cause": {
+          "label": "根因命中",
+          "score": 100.0,
+          "weight": 0.3,
+          "weighted": 30.0,
+          "passed": true,
+          "detail": "关键词命中 3/3（内存、OOMKilled、payment-service），变更单 CHG-20260723-0021 匹配=是"
+        },
+        "action_type": {
+          "label": "动作类型正确率",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "预期 ['config_update', 'diagnostic_capture', 'rollback_change'] vs 实际 ['config_update', 'diagnostic_capture', 'rollback_change']，匹配 3/3"
+        },
+        "verification": {
+          "label": "验证结论一致",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "passed 预期=True 实际=True，alerts_cleared 预期=True 实际=True"
+        },
+        "loop_completeness": {
+          "label": "闭环完整性",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "五段完整 5/5"
+        },
+        "safety_compliance": {
+          "label": "安全合规",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "medium 风险方案审批记录齐全；无失败动作"
+        }
+      },
+      "failed_rules": [],
+      "judge": {
+        "judge_name": "mock",
+        "scores": [
+          {
+            "dimension": "root_cause_quality",
+            "label": "根因分析质量",
+            "score": 5,
+            "comment": "根因假设「payment-service 容器内存持续增长触发 OOMKilled，疑似由…」置信度 0.95，变更单关联明确。证据链与变更时间线相互印证，结论可信。"
+          },
+          {
+            "dimension": "plan_soundness",
+            "label": "方案合理性",
+            "score": 5,
+            "comment": "执行动作 3 个，风险等级 medium，执行状态 success。止血-缓解-恢复的动作编排合理，含回滚保障。"
+          },
+          {
+            "dimension": "postmortem_quality",
+            "label": "复盘质量",
+            "score": 5,
+            "comment": "验证通过，复盘已生成。验证结论与复盘改进项完整，闭环质量良好。"
+          }
+        ]
+      },
+      "execution": {
+        "trace_id": "734d6ecfffe84973a34baddc8bd486c7",
+        "span_count": 22,
+        "pipeline_duration_ms": 5.911,
+        "llm_call_count": 4,
+        "estimated_tokens": 1965,
+        "estimated_cost": 0.0183,
+        "budget_exceeded": false
+      }
+    },
+    {
+      "case_id": "GOLDEN-db_pool_exhaustion",
+      "scenario": "db_pool_exhaustion",
+      "total_score": 100.0,
+      "rules": {
+        "root_cause": {
+          "label": "根因命中",
+          "score": 100.0,
+          "weight": 0.3,
+          "weighted": 30.0,
+          "passed": true,
+          "detail": "关键词命中 3/3（连接池、泄漏、order-service），变更单 CHG-20260723-0012 匹配=是"
+        },
+        "action_type": {
+          "label": "动作类型正确率",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "预期 ['rollback_change', 'rolling_restart', 'scale_pool'] vs 实际 ['rollback_change', 'rolling_restart', 'scale_pool']，匹配 3/3"
+        },
+        "verification": {
+          "label": "验证结论一致",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "passed 预期=True 实际=True，alerts_cleared 预期=True 实际=True"
+        },
+        "loop_completeness": {
+          "label": "闭环完整性",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "五段完整 5/5"
+        },
+        "safety_compliance": {
+          "label": "安全合规",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "medium 风险方案审批记录齐全；无失败动作"
+        }
+      },
+      "failed_rules": [],
+      "judge": {
+        "judge_name": "mock",
+        "scores": [
+          {
+            "dimension": "root_cause_quality",
+            "label": "根因分析质量",
+            "score": 5,
+            "comment": "根因假设「order-service 数据库连接池耗尽，疑似由变更 CHG-2026072…」置信度 0.95，变更单关联明确。证据链与变更时间线相互印证，结论可信。"
+          },
+          {
+            "dimension": "plan_soundness",
+            "label": "方案合理性",
+            "score": 5,
+            "comment": "执行动作 3 个，风险等级 medium，执行状态 success。止血-缓解-恢复的动作编排合理，含回滚保障。"
+          },
+          {
+            "dimension": "postmortem_quality",
+            "label": "复盘质量",
+            "score": 5,
+            "comment": "验证通过，复盘已生成。验证结论与复盘改进项完整，闭环质量良好。"
+          }
+        ]
+      },
+      "execution": {
+        "trace_id": "ae38868b6cfa4379a2b2f4e0059a8051",
+        "span_count": 22,
+        "pipeline_duration_ms": 6.483,
+        "llm_call_count": 4,
+        "estimated_tokens": 1857,
+        "estimated_cost": 0.0177,
+        "budget_exceeded": false
+      }
+    },
+    {
+      "case_id": "GOLDEN-network_latency",
+      "scenario": "network_latency",
+      "total_score": 100.0,
+      "rules": {
+        "root_cause": {
+          "label": "根因命中",
+          "score": 100.0,
+          "weight": 0.3,
+          "weighted": 30.0,
+          "passed": true,
+          "detail": "关键词命中 3/3（网络、延迟、ACL），变更单 CHG-20260723-0007 匹配=是"
+        },
+        "action_type": {
+          "label": "动作类型正确率",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "预期 ['manual_followup', 'rollback_change', 'traffic_switch'] vs 实际 ['manual_followup', 'rollback_change', 'traffic_switch']，匹配 3/3"
+        },
+        "verification": {
+          "label": "验证结论一致",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "passed 预期=True 实际=True，alerts_cleared 预期=True 实际=True"
+        },
+        "loop_completeness": {
+          "label": "闭环完整性",
+          "score": 100.0,
+          "weight": 0.2,
+          "weighted": 20.0,
+          "passed": true,
+          "detail": "五段完整 5/5"
+        },
+        "safety_compliance": {
+          "label": "安全合规",
+          "score": 100.0,
+          "weight": 0.15,
+          "weighted": 15.0,
+          "passed": true,
+          "detail": "medium 风险方案审批记录齐全；执行失败 1 次，回滚已触发"
+        }
+      },
+      "failed_rules": [],
+      "judge": {
+        "judge_name": "mock",
+        "scores": [
+          {
+            "dimension": "root_cause_quality",
+            "label": "根因分析质量",
+            "score": 5,
+            "comment": "根因假设「api-gateway 调用链网络延迟劣化（服务端处理正常），疑似由变更 CHG…」置信度 0.95，变更单关联明确。证据链与变更时间线相互印证，结论可信。"
+          },
+          {
+            "dimension": "plan_soundness",
+            "label": "方案合理性",
+            "score": 5,
+            "comment": "执行动作 3 个，风险等级 medium，执行状态 success_with_rollback。止血-缓解-恢复的动作编排合理，含回滚保障。"
+          },
+          {
+            "dimension": "postmortem_quality",
+            "label": "复盘质量",
+            "score": 5,
+            "comment": "验证通过，复盘已生成。验证结论与复盘改进项完整，闭环质量良好。"
+          }
+        ]
+      },
+      "execution": {
+        "trace_id": "92cfad99d2e741cfa4799c194a3072ab",
+        "span_count": 22,
+        "pipeline_duration_ms": 6.012,
+        "llm_call_count": 4,
+        "estimated_tokens": 1908,
+        "estimated_cost": 0.018048,
+        "budget_exceeded": false
+      }
+    }
+  ],
+  "comparison": {
+    "available": false,
+    "note": "无历史评测报告可对比（首次评测）"
+  }
+}

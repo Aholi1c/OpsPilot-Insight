@@ -1,0 +1,60 @@
+{
+  "alerts": [
+    {
+      "fingerprint": "a38c0d2e5f619b77",
+      "status": "firing",
+      "labels": {
+        "alertname": "HighP99Latency",
+        "severity": "critical",
+        "service": "user-service",
+        "namespace": "prod",
+        "instance": "user-service-8e0a9b7c6-t3mwp:8080",
+        "zone": "cn-hangzhou-b",
+        "team": "user"
+      },
+      "annotations": {
+        "summary": "user-service 调用侧 P99 延迟严重劣化",
+        "description": "api-gateway 观测到 user-service 的 P99 延迟由 80ms 升至 1540ms，阈值 500ms"
+      },
+      "startsAt": "2026-07-23T11:02:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=client_p99_latency"
+    },
+    {
+      "fingerprint": "a38c0d2e5f619b77",
+      "status": "firing",
+      "labels": {
+        "alertname": "HighP99Latency",
+        "severity": "critical",
+        "service": "user-service",
+        "namespace": "prod",
+        "instance": "user-service-8e0a9b7c6-t3mwp:8080",
+        "zone": "cn-hangzhou-b",
+        "team": "user"
+      },
+      "annotations": {
+        "summary": "user-service 调用侧 P99 延迟严重劣化",
+        "description": "api-gateway 观测到 user-service 的 P99 延迟由 80ms 升至 1540ms（重复推送）"
+      },
+      "startsAt": "2026-07-23T11:04:00+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=client_p99_latency"
+    },
+    {
+      "fingerprint": "b49d1e3f6a720c88",
+      "status": "firing",
+      "labels": {
+        "alertname": "UpstreamTimeout",
+        "severity": "warning",
+        "service": "api-gateway",
+        "namespace": "prod",
+        "instance": "api-gateway-5b8c6d7e9-p4nvz:8443",
+        "team": "platform"
+      },
+      "annotations": {
+        "summary": "api-gateway 出现上游读超时",
+        "description": "路由 /api/user/* 近 5 分钟上游读超时 47 次（read timeout 1s），影响登录与个人中心"
+      },
+      "startsAt": "2026-07-23T11:05:40+08:00",
+      "generatorURL": "http://prometheus.prod.internal/graph?g0.expr=gateway_upstream_timeout_total"
+    }
+  ]
+}

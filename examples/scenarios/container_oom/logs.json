@@ -1,0 +1,60 @@
+{
+  "logs": [
+    {
+      "timestamp": "2026-07-23T10:12:33.481+08:00",
+      "level": "WARN",
+      "service": "payment-service",
+      "logger": "com.example.pay.cache.RiskRuleCacheLoader",
+      "message": "Caffeine cache 'risk-rules' size reached 8,742,315 entries, estimated heap usage 2.9GiB"
+    },
+    {
+      "timestamp": "2026-07-23T10:14:07.912+08:00",
+      "level": "ERROR",
+      "service": "payment-service",
+      "logger": "com.example.pay.core.PaymentExecutor",
+      "message": "java.lang.OutOfMemoryError: Java heap space at java.base/java.util.concurrent.ConcurrentHashMap.putVal(ConcurrentHashMap.java:1099)"
+    },
+    {
+      "timestamp": "2026-07-23T10:14:52.336+08:00",
+      "level": "ERROR",
+      "service": "payment-service",
+      "logger": "kernel",
+      "message": "java invoked oom-killer: gfp_mask=0x14200ca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=968; Memory cgroup out of memory: Killed process 23847 (java) total-vm:6291456kB"
+    },
+    {
+      "timestamp": "2026-07-23T10:15:04.020+08:00",
+      "level": "WARN",
+      "service": "payment-service",
+      "logger": "kubelet",
+      "message": "Container payment-service in pod payment-service-7d9f8c6b5-w8jql was OOMKilled, lastState: terminated, reason: OOMKilled, exitCode: 137"
+    },
+    {
+      "timestamp": "2026-07-23T10:16:41.775+08:00",
+      "level": "ERROR",
+      "service": "payment-service",
+      "logger": "com.example.pay.core.PaymentExecutor",
+      "message": "java.lang.OutOfMemoryError: Java heap space - GC overhead limit exceeded during risk rule evaluation"
+    },
+    {
+      "timestamp": "2026-07-23T10:18:22.548+08:00",
+      "level": "WARN",
+      "service": "payment-service",
+      "logger": "kubelet",
+      "message": "Back-off restarting failed container payment-service, pod entering CrashLoopBackOff (restartCount=6)"
+    },
+    {
+      "timestamp": "2026-07-23T10:19:01.190+08:00",
+      "level": "ERROR",
+      "service": "api-gateway",
+      "logger": "gateway.access",
+      "message": "POST /api/pay/create responded 502 Bad Gateway, connect to upstream payment-service:8080 refused (ECONNREFUSED), client=221.13.72.45"
+    },
+    {
+      "timestamp": "2026-07-23T10:19:30.664+08:00",
+      "level": "INFO",
+      "service": "order-service",
+      "logger": "com.example.order.web",
+      "message": "GET /orders/detail/88231 200 in 15ms"
+    }
+  ]
+}

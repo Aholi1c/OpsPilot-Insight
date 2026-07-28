@@ -1,0 +1,162 @@
+{
+  "trace_id": "92cfad99d2e741cfa4799c194a3072ab",
+  "generated_at": "2026-07-24T16:43:00+08:00",
+  "pipeline_duration_ms": 6.012,
+  "llm": {
+    "call_count": 4,
+    "prompt_chars": 4698,
+    "completion_chars": 436,
+    "estimated_prompt_tokens": 1676,
+    "estimated_completion_tokens": 232,
+    "provider": "mock",
+    "calls": [
+      {
+        "provider": "mock",
+        "model": "mock",
+        "agent": "AlertAgent",
+        "skill": "",
+        "prompt_tokens": 232,
+        "completion_tokens": 42,
+        "token_source": "estimated"
+      },
+      {
+        "provider": "mock",
+        "model": "mock",
+        "agent": "RcaAgent",
+        "skill": "",
+        "prompt_tokens": 936,
+        "completion_tokens": 78,
+        "token_source": "estimated"
+      },
+      {
+        "provider": "mock",
+        "model": "mock",
+        "agent": "PlannerAgent",
+        "skill": "",
+        "prompt_tokens": 288,
+        "completion_tokens": 45,
+        "token_source": "estimated"
+      },
+      {
+        "provider": "mock",
+        "model": "mock",
+        "agent": "VerifierAgent",
+        "skill": "",
+        "prompt_tokens": 220,
+        "completion_tokens": 67,
+        "token_source": "estimated"
+      }
+    ]
+  },
+  "skills": {
+    "alert_fusion": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.03,
+      "success_rate": 1.0
+    },
+    "impact_mapping": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.099,
+      "success_rate": 1.0
+    },
+    "log_trace_rca": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.423,
+      "success_rate": 1.0
+    },
+    "case_retrieval": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 2.036,
+      "success_rate": 1.0
+    },
+    "runbook_rag": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 1.791,
+      "success_rate": 1.0
+    },
+    "risk_guard": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.011,
+      "success_rate": 1.0
+    },
+    "safe_execute": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.308,
+      "success_rate": 1.0
+    },
+    "recovery_verify": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.19,
+      "success_rate": 1.0
+    },
+    "postmortem": {
+      "call_count": 1,
+      "success_count": 1,
+      "total_ms": 0.022,
+      "success_rate": 1.0
+    }
+  },
+  "agents": {
+    "AlertAgent": {
+      "call_count": 1,
+      "total_ms": 0.262
+    },
+    "RcaAgent": {
+      "call_count": 1,
+      "total_ms": 2.637
+    },
+    "PlannerAgent": {
+      "call_count": 1,
+      "total_ms": 1.909
+    },
+    "ExecutorAgent": {
+      "call_count": 1,
+      "total_ms": 0.432
+    },
+    "VerifierAgent": {
+      "call_count": 1,
+      "total_ms": 0.528
+    }
+  },
+  "rag": {
+    "query_count": 2,
+    "hit_count": 6
+  },
+  "cost": {
+    "currency": "CNY",
+    "total_cost": 0.018048,
+    "llm_call_count": 4,
+    "per_agent": {
+      "RcaAgent": 0.009048,
+      "PlannerAgent": 0.003204,
+      "VerifierAgent": 0.0031,
+      "AlertAgent": 0.002696
+    },
+    "per_model": {
+      "mock": 0.018048
+    },
+    "per_skill": {
+      "case_retrieval": 0.007444,
+      "runbook_rag": 0.003204,
+      "recovery_verify": 0.002611,
+      "impact_mapping": 0.001849,
+      "log_trace_rca": 0.001604,
+      "alert_fusion": 0.000847,
+      "postmortem": 0.000489
+    },
+    "budget": {
+      "limit": 0.1,
+      "exceeded": false,
+      "usage_ratio": 0.1805
+    },
+    "attribution_note": "per-Skill 为近似口径：Skill 链直接发起的 LLM 调用精确归因，Agent 直接推理成本按该 Agent 各 Skill 耗时占比分摊"
+  }
+}

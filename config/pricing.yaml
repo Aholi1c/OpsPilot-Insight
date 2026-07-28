@@ -1,0 +1,28 @@
+# 成本模型：LLM token 单价与单次事故处理预算
+# - 单价单位：元 / 1000 token（input=prompt，output=completion）
+# - mock 模型给出虚拟单价，便于离线演示成本分解与预算告警链路
+# - budget.per_incident：单次事故处理（一次五段闭环）预算上限；超限不中断流程，
+#   仅在 metrics/报告/看板标红并记 audit 事件 budget_alert
+# 本文件由 src/opspilot/config.py 的轻量 YAML 子集解析器加载。
+
+currency: CNY
+
+models:
+  mock:
+    input_per_1k: 0.008
+    output_per_1k: 0.02
+  qwen-plus:
+    input_per_1k: 0.008
+    output_per_1k: 0.02
+  qwen-turbo:
+    input_per_1k: 0.0003
+    output_per_1k: 0.0006
+  qwen-max:
+    input_per_1k: 0.04
+    output_per_1k: 0.12
+  default:
+    input_per_1k: 0.008
+    output_per_1k: 0.02
+
+budget:
+  per_incident: 0.10

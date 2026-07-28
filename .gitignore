@@ -1,0 +1,8 @@
+# 运行产物与本地环境
+output/*
+!output/.gitkeep
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store

@@ -1,0 +1,62 @@
+{
+  "metrics": [
+    {
+      "name": "user_service_client_p99_latency_ms",
+      "service": "api-gateway",
+      "unit": "ms",
+      "labels": {"upstream": "user-service", "zone": "cn-hangzhou-b", "measured_at": "client"},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 78},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 82},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 85},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 640},
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 1180},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 1490},
+        {"timestamp": "2026-07-23T11:05:00+08:00", "value": 1540}
+      ]
+    },
+    {
+      "name": "user_service_server_p99_latency_ms",
+      "service": "user-service",
+      "unit": "ms",
+      "labels": {"measured_at": "server"},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 39},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 41},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 40},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 42},
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 41},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 43},
+        {"timestamp": "2026-07-23T11:05:00+08:00", "value": 42}
+      ]
+    },
+    {
+      "name": "gateway_upstream_timeout_total",
+      "service": "api-gateway",
+      "unit": "count/5min",
+      "labels": {"route": "/api/user/*"},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T10:20:00+08:00", "value": 1},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 9},
+        {"timestamp": "2026-07-23T10:45:00+08:00", "value": 23},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 41},
+        {"timestamp": "2026-07-23T11:05:00+08:00", "value": 47}
+      ]
+    },
+    {
+      "name": "user_service_cpu_usage_percent",
+      "service": "user-service",
+      "unit": "%",
+      "labels": {},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 31},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 33},
+        {"timestamp": "2026-07-23T10:30:00+08:00", "value": 30},
+        {"timestamp": "2026-07-23T11:00:00+08:00", "value": 29},
+        {"timestamp": "2026-07-23T11:05:00+08:00", "value": 30}
+      ]
+    }
+  ]
+}

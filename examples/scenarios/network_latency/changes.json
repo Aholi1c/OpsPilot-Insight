@@ -1,0 +1,40 @@
+{
+  "changes": [
+    {
+      "change_id": "CHG-20260723-0007",
+      "service": "network-infra",
+      "type": "network",
+      "title": "可用区 B 安全组/ACL 策略更新：收紧跨可用区东西向流量规则",
+      "release_ticket": "NET-20260723-1102",
+      "submitted_by": "wangjun",
+      "start_time": "2026-07-23T10:15:00+08:00",
+      "end_time": "2026-07-23T10:20:00+08:00",
+      "status": "success",
+      "diff_summary": "更新 cn-hangzhou-b 安全组规则，新增东西向流量深度检测策略；变更后跨可用区链路 RTT 明显上升（api-gateway 位于可用区 A，user-service 位于可用区 B）"
+    },
+    {
+      "change_id": "CHG-20260723-0018",
+      "service": "goods-service",
+      "type": "deployment",
+      "title": "商品服务 v2.3.1 发布：商品详情页缓存策略优化",
+      "release_ticket": "REL-20260723-8883",
+      "submitted_by": "zhaolei",
+      "start_time": "2026-07-23T09:05:00+08:00",
+      "end_time": "2026-07-23T09:10:00+08:00",
+      "status": "success",
+      "diff_summary": "商品详情缓存 TTL 调整与预热逻辑优化，与用户链路无关"
+    },
+    {
+      "change_id": "CHG-20260722-0095",
+      "service": "user-service",
+      "type": "deployment",
+      "title": "用户服务 v4.1.0 发布：登录风控策略升级",
+      "release_ticket": "REL-20260722-8812",
+      "submitted_by": "qianyi",
+      "start_time": "2026-07-22T15:30:00+08:00",
+      "end_time": "2026-07-22T15:38:00+08:00",
+      "status": "success",
+      "diff_summary": "登录风控规则升级，发布后观察 18 小时指标平稳（超出本次告警关联时间窗）"
+    }
+  ]
+}

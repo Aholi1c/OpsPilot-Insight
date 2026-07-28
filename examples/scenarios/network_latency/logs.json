@@ -1,0 +1,53 @@
+{
+  "logs": [
+    {
+      "timestamp": "2026-07-23T11:00:52.317+08:00",
+      "level": "ERROR",
+      "service": "api-gateway",
+      "logger": "gateway.upstream",
+      "message": "upstream timed out (110: Connection timed out) while reading response header from upstream, request: GET /api/user/profile, upstream: http://10.2.33.17:8080/user/profile, zone: cn-hangzhou-b"
+    },
+    {
+      "timestamp": "2026-07-23T11:02:14.905+08:00",
+      "level": "ERROR",
+      "service": "api-gateway",
+      "logger": "gateway.upstream",
+      "message": "upstream timed out (110: Connection timed out) while reading response header from upstream, request: POST /api/user/login, upstream: http://10.2.33.18:8080/user/login, zone: cn-hangzhou-b"
+    },
+    {
+      "timestamp": "2026-07-23T11:03:48.132+08:00",
+      "level": "WARN",
+      "service": "api-gateway",
+      "logger": "gateway.retry",
+      "message": "retrying GET /api/user/profile after Read timed out on upstream 10.2.33.17:8080 (attempt 2/3), rt=1503ms"
+    },
+    {
+      "timestamp": "2026-07-23T11:04:29.660+08:00",
+      "level": "ERROR",
+      "service": "api-gateway",
+      "logger": "gateway.upstream",
+      "message": "upstream timed out (110: Connection timed out) while reading response header from upstream, request: GET /api/user/center, upstream: http://10.2.33.17:8080/user/center, zone: cn-hangzhou-b"
+    },
+    {
+      "timestamp": "2026-07-23T11:04:55.001+08:00",
+      "level": "INFO",
+      "service": "user-service",
+      "logger": "com.example.user.web.UserController",
+      "message": "GET /user/profile 200 in 38ms (server-side processing normal)"
+    },
+    {
+      "timestamp": "2026-07-23T11:05:12.478+08:00",
+      "level": "INFO",
+      "service": "user-service",
+      "logger": "com.example.user.web.UserController",
+      "message": "POST /user/login 200 in 41ms (server-side processing normal)"
+    },
+    {
+      "timestamp": "2026-07-23T11:05:58.823+08:00",
+      "level": "INFO",
+      "service": "goods-service",
+      "logger": "com.example.goods.web",
+      "message": "GET /goods/detail/33012 200 in 19ms"
+    }
+  ]
+}

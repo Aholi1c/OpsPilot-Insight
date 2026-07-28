@@ -1,0 +1,402 @@
+{
+  "trace_id": "a681d0df175540dd8bb5251137a56000",
+  "span_count": 22,
+  "spans": [
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "7300a04325ae43bb",
+      "parent_span_id": null,
+      "name": "pipeline.run",
+      "kind": "INTERNAL",
+      "start_time": 1784882580208647000,
+      "end_time": 1784882580215455000,
+      "duration_ms": 6.808,
+      "attributes": {
+        "scenario": "container_oom",
+        "llm.provider": "mock"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "092f3689a41647d3",
+      "parent_span_id": "7300a04325ae43bb",
+      "name": "agent.AlertAgent",
+      "kind": "INTERNAL",
+      "start_time": 1784882580208695000,
+      "end_time": 1784882580209351000,
+      "duration_ms": 0.656,
+      "attributes": {
+        "agent.name": "AlertAgent",
+        "agent.role": "告警接入与影响面评估专家",
+        "message.type": "incident_request",
+        "message.sender": "orchestrator"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "950ac6e1a2ea4128",
+      "parent_span_id": "092f3689a41647d3",
+      "name": "skill.alert_fusion",
+      "kind": "INTERNAL",
+      "start_time": 1784882580208726000,
+      "end_time": 1784882580208817000,
+      "duration_ms": 0.091,
+      "attributes": {
+        "skill.name": "alert_fusion",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "db595e2f4b2540f9",
+      "parent_span_id": "092f3689a41647d3",
+      "name": "skill.impact_mapping",
+      "kind": "INTERNAL",
+      "start_time": 1784882580208824000,
+      "end_time": 1784882580209170000,
+      "duration_ms": 0.346,
+      "attributes": {
+        "skill.name": "impact_mapping",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "e69c329fa6564e62",
+      "parent_span_id": "092f3689a41647d3",
+      "name": "llm.complete",
+      "kind": "CLIENT",
+      "start_time": 1784882580209191000,
+      "end_time": 1784882580209277000,
+      "duration_ms": 0.086,
+      "attributes": {
+        "llm.provider": "mock",
+        "llm.model": "mock",
+        "llm.prompt_chars": 1004,
+        "llm.completion_chars": 92,
+        "llm.prompt_tokens": 291,
+        "llm.completion_tokens": 40
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "7e6c50b7d3c44b0e",
+      "parent_span_id": "7300a04325ae43bb",
+      "name": "agent.RcaAgent",
+      "kind": "INTERNAL",
+      "start_time": 1784882580209369000,
+      "end_time": 1784882580212158000,
+      "duration_ms": 2.789,
+      "attributes": {
+        "agent.name": "RcaAgent",
+        "agent.role": "多维根因分析专家",
+        "message.type": "incident",
+        "message.sender": "orchestrator"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "716c2e628c184dd7",
+      "parent_span_id": "7e6c50b7d3c44b0e",
+      "name": "skill.log_trace_rca",
+      "kind": "INTERNAL",
+      "start_time": 1784882580209388000,
+      "end_time": 1784882580210198000,
+      "duration_ms": 0.81,
+      "attributes": {
+        "skill.name": "log_trace_rca",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "4d5038f6bcad4976",
+      "parent_span_id": "7e6c50b7d3c44b0e",
+      "name": "skill.case_retrieval",
+      "kind": "INTERNAL",
+      "start_time": 1784882580210218000,
+      "end_time": 1784882580211990000,
+      "duration_ms": 1.772,
+      "attributes": {
+        "skill.name": "case_retrieval",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "e814816291cc46dd",
+      "parent_span_id": "7e6c50b7d3c44b0e",
+      "name": "llm.complete",
+      "kind": "CLIENT",
+      "start_time": 1784882580212027000,
+      "end_time": 1784882580212114000,
+      "duration_ms": 0.087,
+      "attributes": {
+        "llm.provider": "mock",
+        "llm.model": "mock",
+        "llm.prompt_chars": 2945,
+        "llm.completion_chars": 131,
+        "llm.prompt_tokens": 942,
+        "llm.completion_tokens": 67
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "4f712ac6451c4000",
+      "parent_span_id": "7300a04325ae43bb",
+      "name": "agent.PlannerAgent",
+      "kind": "INTERNAL",
+      "start_time": 1784882580212177000,
+      "end_time": 1784882580214257000,
+      "duration_ms": 2.08,
+      "attributes": {
+        "agent.name": "PlannerAgent",
+        "agent.role": "修复方案规划专家",
+        "message.type": "root_cause",
+        "message.sender": "orchestrator"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "5995d28dc1a54280",
+      "parent_span_id": "4f712ac6451c4000",
+      "name": "skill.runbook_rag",
+      "kind": "INTERNAL",
+      "start_time": 1784882580212218000,
+      "end_time": 1784882580214144000,
+      "duration_ms": 1.926,
+      "attributes": {
+        "skill.name": "runbook_rag",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "b2e08de669564fb6",
+      "parent_span_id": "4f712ac6451c4000",
+      "name": "llm.complete",
+      "kind": "CLIENT",
+      "start_time": 1784882580214172000,
+      "end_time": 1784882580214207000,
+      "duration_ms": 0.035,
+      "attributes": {
+        "llm.provider": "mock",
+        "llm.model": "mock",
+        "llm.prompt_chars": 646,
+        "llm.completion_chars": 84,
+        "llm.prompt_tokens": 274,
+        "llm.completion_tokens": 43
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "6abe31ff4d974bd7",
+      "parent_span_id": "7300a04325ae43bb",
+      "name": "agent.ExecutorAgent",
+      "kind": "INTERNAL",
+      "start_time": 1784882580214275000,
+      "end_time": 1784882580214638000,
+      "duration_ms": 0.363,
+      "attributes": {
+        "agent.name": "ExecutorAgent",
+        "agent.role": "安全执行专家",
+        "message.type": "remediation_plan",
+        "message.sender": "orchestrator"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "345dd2ada963474f",
+      "parent_span_id": "6abe31ff4d974bd7",
+      "name": "skill.risk_guard",
+      "kind": "INTERNAL",
+      "start_time": 1784882580214292000,
+      "end_time": 1784882580214335000,
+      "duration_ms": 0.043,
+      "attributes": {
+        "skill.name": "risk_guard",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "da0fb9dc1dc24735",
+      "parent_span_id": "6abe31ff4d974bd7",
+      "name": "skill.safe_execute",
+      "kind": "INTERNAL",
+      "start_time": 1784882580214381000,
+      "end_time": 1784882580214587000,
+      "duration_ms": 0.206,
+      "attributes": {
+        "skill.name": "safe_execute",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "6813dd2c482d434a",
+      "parent_span_id": "da0fb9dc1dc24735",
+      "name": "execute.step_1",
+      "kind": "CLIENT",
+      "start_time": 1784882580214414000,
+      "end_time": 1784882580214465000,
+      "duration_ms": 0.051,
+      "attributes": {
+        "action.order": 1,
+        "action.type": "rollback_change",
+        "action.fallback": false,
+        "idempotency_key": "b956490af64edd97",
+        "action.status": "success"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "bfe8a33558d74d7e",
+      "parent_span_id": "da0fb9dc1dc24735",
+      "name": "execute.step_2",
+      "kind": "CLIENT",
+      "start_time": 1784882580214481000,
+      "end_time": 1784882580214520000,
+      "duration_ms": 0.039,
+      "attributes": {
+        "action.order": 2,
+        "action.type": "config_update",
+        "action.fallback": false,
+        "idempotency_key": "90ae9540c5e09cef",
+        "action.status": "success"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "e0021937cbf94848",
+      "parent_span_id": "da0fb9dc1dc24735",
+      "name": "execute.step_3",
+      "kind": "CLIENT",
+      "start_time": 1784882580214534000,
+      "end_time": 1784882580214572000,
+      "duration_ms": 0.038,
+      "attributes": {
+        "action.order": 3,
+        "action.type": "diagnostic_capture",
+        "action.fallback": false,
+        "idempotency_key": "06c33cc6b2ae4e00",
+        "action.status": "success"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "2c0682a0a726479c",
+      "parent_span_id": "7300a04325ae43bb",
+      "name": "agent.VerifierAgent",
+      "kind": "INTERNAL",
+      "start_time": 1784882580214656000,
+      "end_time": 1784882580215452000,
+      "duration_ms": 0.796,
+      "attributes": {
+        "agent.name": "VerifierAgent",
+        "agent.role": "恢复验证与复盘专家",
+        "message.type": "execution_result",
+        "message.sender": "orchestrator"
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "6920e92d1e04464b",
+      "parent_span_id": "2c0682a0a726479c",
+      "name": "skill.recovery_verify",
+      "kind": "INTERNAL",
+      "start_time": 1784882580214671000,
+      "end_time": 1784882580215047000,
+      "duration_ms": 0.376,
+      "attributes": {
+        "skill.name": "recovery_verify",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "551bf0c47ea8476a",
+      "parent_span_id": "2c0682a0a726479c",
+      "name": "skill.postmortem",
+      "kind": "INTERNAL",
+      "start_time": 1784882580215062000,
+      "end_time": 1784882580215114000,
+      "duration_ms": 0.052,
+      "attributes": {
+        "skill.name": "postmortem",
+        "skill.version": "1.0.0",
+        "skill.success": true
+      },
+      "status": "OK",
+      "status_message": ""
+    },
+    {
+      "trace_id": "a681d0df175540dd8bb5251137a56000",
+      "span_id": "e0708f0de2df43fa",
+      "parent_span_id": "2c0682a0a726479c",
+      "name": "llm.complete",
+      "kind": "CLIENT",
+      "start_time": 1784882580215124000,
+      "end_time": 1784882580215153000,
+      "duration_ms": 0.029,
+      "attributes": {
+        "llm.provider": "mock",
+        "llm.model": "mock",
+        "llm.prompt_chars": 441,
+        "llm.completion_chars": 123,
+        "llm.prompt_tokens": 182,
+        "llm.completion_tokens": 65
+      },
+      "status": "OK",
+      "status_message": ""
+    }
+  ]
+}

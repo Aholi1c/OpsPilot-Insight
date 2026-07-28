@@ -1,0 +1,40 @@
+{
+  "changes": [
+    {
+      "change_id": "CHG-20260723-0021",
+      "service": "payment-service",
+      "type": "deployment",
+      "title": "支付服务 v3.8.2 发布：开启 Caffeine 本地缓存加速风控规则查询",
+      "release_ticket": "REL-20260723-8907",
+      "submitted_by": "liuyang",
+      "start_time": "2026-07-23T07:32:00+08:00",
+      "end_time": "2026-07-23T07:40:00+08:00",
+      "status": "success",
+      "diff_summary": "风控规则查询接入 Caffeine 本地缓存；maximumSize 误配为 10_000_000（预期 10_000），且未设置 expireAfterWrite，缓存对象常驻堆内存导致内存持续膨胀"
+    },
+    {
+      "change_id": "CHG-20260723-0015",
+      "service": "coupon-service",
+      "type": "config",
+      "title": "优惠券服务限流阈值由 2000 QPS 上调至 3000 QPS",
+      "release_ticket": "REL-20260723-8869",
+      "submitted_by": "sunqi",
+      "start_time": "2026-07-23T09:02:00+08:00",
+      "end_time": "2026-07-23T09:03:00+08:00",
+      "status": "success",
+      "diff_summary": "仅调整 Sentinel 限流规则，不涉及支付链路"
+    },
+    {
+      "change_id": "CHG-20260722-0091",
+      "service": "payment-service",
+      "type": "config",
+      "title": "支付渠道路由权重调整：渠道 A 60% -> 70%",
+      "release_ticket": "REL-20260722-8801",
+      "submitted_by": "liuyang",
+      "start_time": "2026-07-22T20:10:00+08:00",
+      "end_time": "2026-07-22T20:12:00+08:00",
+      "status": "success",
+      "diff_summary": "仅调整渠道路由权重配置，无代码变更"
+    }
+  ]
+}

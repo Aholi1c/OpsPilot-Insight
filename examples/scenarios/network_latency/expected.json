@@ -1,0 +1,11 @@
+{
+  "description": "network_latency 场景的人工校准标准答案（该场景内置首动作失败→自动回滚→备选切流剧本）",
+  "root_cause_keywords": ["网络", "延迟", "ACL"],
+  "related_change_id": "CHG-20260723-0007",
+  "expected_action_types": ["rollback_change", "traffic_switch", "manual_followup"],
+  "expected_execution_status": ["success_with_rollback"],
+  "expected_verification": {
+    "passed": true,
+    "alerts_cleared": true
+  }
+}

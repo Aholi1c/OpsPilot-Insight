@@ -1,0 +1,64 @@
+{
+  "metrics": [
+    {
+      "name": "container_memory_working_set_bytes",
+      "service": "payment-service",
+      "unit": "MiB",
+      "labels": {"pod": "payment-service-7d9f8c6b5-w8jql", "limit_mib": "4096"},
+      "points": [
+        {"timestamp": "2026-07-23T07:30:00+08:00", "value": 1180},
+        {"timestamp": "2026-07-23T08:00:00+08:00", "value": 1560},
+        {"timestamp": "2026-07-23T08:30:00+08:00", "value": 2080},
+        {"timestamp": "2026-07-23T09:00:00+08:00", "value": 2610},
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 3170},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 3760},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 4020},
+        {"timestamp": "2026-07-23T10:15:00+08:00", "value": 4090}
+      ]
+    },
+    {
+      "name": "jvm_heap_used_bytes",
+      "service": "payment-service",
+      "unit": "MiB",
+      "labels": {"area": "heap", "xmx_mib": "3276"},
+      "points": [
+        {"timestamp": "2026-07-23T07:30:00+08:00", "value": 890},
+        {"timestamp": "2026-07-23T08:00:00+08:00", "value": 1240},
+        {"timestamp": "2026-07-23T08:30:00+08:00", "value": 1690},
+        {"timestamp": "2026-07-23T09:00:00+08:00", "value": 2150},
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 2640},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 3050},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 3210},
+        {"timestamp": "2026-07-23T10:15:00+08:00", "value": 3260}
+      ]
+    },
+    {
+      "name": "kube_pod_container_status_restarts_total",
+      "service": "payment-service",
+      "unit": "restarts",
+      "labels": {"pod": "payment-service-7d9f8c6b5-w8jql"},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T09:50:00+08:00", "value": 0},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 1},
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 2},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 4},
+        {"timestamp": "2026-07-23T10:18:00+08:00", "value": 6}
+      ]
+    },
+    {
+      "name": "payment_success_rate_percent",
+      "service": "payment-service",
+      "unit": "%",
+      "labels": {},
+      "points": [
+        {"timestamp": "2026-07-23T09:30:00+08:00", "value": 99.9},
+        {"timestamp": "2026-07-23T09:50:00+08:00", "value": 99.8},
+        {"timestamp": "2026-07-23T10:00:00+08:00", "value": 96.4},
+        {"timestamp": "2026-07-23T10:05:00+08:00", "value": 90.1},
+        {"timestamp": "2026-07-23T10:10:00+08:00", "value": 84.6},
+        {"timestamp": "2026-07-23T10:18:00+08:00", "value": 78.3}
+      ]
+    }
+  ]
+}
