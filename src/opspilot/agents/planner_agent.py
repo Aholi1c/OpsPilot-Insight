@@ -109,10 +109,10 @@ class PlannerAgent(BaseAgent):
                  "command": f"kubectl set env deployment/{service} -n prod HIKARI_MAXIMUM_POOL_SIZE=20",
                  "expected_effect": "配置回到基线，避免掩盖问题"},
             ])
-        elif category == "container_oom":
+        elif category == "container_oom" and change_id:
             risk = "medium"
             steps = _steps([
-                {"action": f"回滚可疑变更 {change_id or '（最近一次发布）'}，移除内存膨胀源",
+                {"action": f"回滚可疑变更 {change_id}，移除内存膨胀源",
                  "action_type": "rollback_change",
                  "command": f"kubectl rollout undo deployment/{service} -n prod",
                  "expected_effect": "内存增长曲线恢复平稳"},
@@ -130,6 +130,34 @@ class PlannerAgent(BaseAgent):
                  "action_type": "config_update",
                  "command": f"kubectl patch deployment {service} -n prod --patch '{{\"spec\":{{\"template\":{{\"spec\":{{\"containers\":[{{\"name\":\"{service}\",\"resources\":{{\"limits\":{{\"memory\":\"4Gi\"}}}}}}]}}}}}}}}'",
                  "expected_effect": "配置回到基线"},
+            ])
+        elif category == "container_oom":
+            # 无强关联变更（协商模式"应用内存泄漏"假设）：不回滚发布，
+            # 以重启止血 + 扩容缓冲 + 取证定位为主线
+            risk = "medium"
+            steps = _steps([
+                {"action": "滚动重启实例，释放已膨胀堆内存临时止血",
+                 "action_type": "rolling_restart",
+                 "command": f"kubectl rollout restart deployment/{service} -n prod",
+                 "expected_effect": "OOMKilled 暂停复现，服务恢复可用"},
+                {"action": "临时上调容器内存 limit，为泄漏定位争取观察窗口",
+                 "action_type": "config_update",
+                 "command": f"kubectl patch deployment {service} -n prod --patch '{{\"spec\":{{\"template\":{{\"spec\":{{\"containers\":[{{\"name\":\"{service}\",\"resources\":{{\"limits\":{{\"memory\":\"6Gi\"}}}}}}]}}}}}}}}'",
+                 "expected_effect": "短期内不再触发 OOMKilled"},
+                {"action": "采集 heap dump 与 GC 日志，定位泄漏对象后由人工修复代码",
+                 "action_type": "diagnostic_capture",
+                 "command": f"kubectl exec deploy/{service} -n prod -- jmap -dump:live,file=/tmp/heap.hprof 1",
+                 "expected_effect": "获得内存快照，确认泄漏对象与引用链"},
+                {"action": "升级人工介入：研发按 heap dump 结论修复泄漏代码",
+                 "action_type": "manual_followup",
+                 "command": None,
+                 "expected_effect": "根因彻底修复，防止复发"},
+            ])
+            rollback = _steps([
+                {"action": "若重启后内存仍快速爬升，恢复内存 limit 原值并升级人工介入",
+                 "action_type": "config_update",
+                 "command": f"kubectl patch deployment {service} -n prod --patch '{{\"spec\":{{\"template\":{{\"spec\":{{\"containers\":[{{\"name\":\"{service}\",\"resources\":{{\"limits\":{{\"memory\":\"4Gi\"}}}}}}]}}}}}}}}'",
+                 "expected_effect": "配置回到基线，避免掩盖问题"},
             ])
         elif category == "network_latency":
             risk = "medium"
@@ -152,6 +180,33 @@ class PlannerAgent(BaseAgent):
                  "action_type": "traffic_switch",
                  "command": "kubectl annotate svc user-service -n prod topology.kubernetes.io/preferred-zone- ",
                  "expected_effect": "恢复默认流量分布"},
+            ])
+        elif category == "transaction_risk_surge":
+            # 金融风控场景：涉及批量冻结客户账户，属高风险动作，必须审批
+            risk = "high"
+            steps = _steps([
+                {"action": "批量冻结命中撞库特征的 47 个可疑账户，阻断继续转出",
+                 "action_type": "freeze_account",
+                 "command": "riskctl account freeze --batch --reason=account_takeover_suspected --ticket=INC-AUTO --accounts-from=risk-engine:takeover_hits",
+                 "expected_effect": "可疑账户资金转出通道关闭，止损生效"},
+                {"action": "对设备指纹异常的高风险会话强制下线并要求二次验证（短信+人脸）",
+                 "action_type": "trigger_2fa",
+                 "command": "riskctl session revoke --filter=device_fingerprint_mismatch --require-2fa=sms+face",
+                 "expected_effect": "被盗会话失效，真实用户可通过二次验证恢复访问"},
+                {"action": "通知风控值班与反欺诈团队跟进人工核验与客户触达",
+                 "action_type": "notify_team",
+                 "command": "riskctl notify --team=risk-oncall,anti-fraud --level=P1 --incident=INC-AUTO",
+                 "expected_effect": "人工介入核验冻结名单，安抚受影响客户"},
+            ])
+            rollback = _steps([
+                {"action": "对人工核验为误冻结的账户批量解冻并补偿手续费",
+                 "action_type": "freeze_account",
+                 "command": "riskctl account unfreeze --batch --verified-by=risk-oncall",
+                 "expected_effect": "误冻结账户恢复正常交易能力"},
+                {"action": "恢复会话验证等级为默认策略",
+                 "action_type": "trigger_2fa",
+                 "command": "riskctl session policy reset --scope=affected",
+                 "expected_effect": "验证策略回到基线，不影响正常用户体验"},
             ])
         else:
             # 未知类别：仅给出保守的观察与人工升级方案

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""端到端测试：3 个场景各跑一遍完整流水线。
+"""端到端测试：4 个场景各跑一遍完整流水线。
 
 断言点：
 1. 报告字段完整（事件/根因候选/选定根因/修复方案/回滚计划）；
@@ -11,19 +11,17 @@ from __future__ import annotations
 
 import json
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
-# 将 src 加入模块搜索路径（免安装直接测试）
+# src 路径由 tests/conftest.py 统一注入；此处仅保留项目根用于定位数据文件
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 
 from opspilot.models import IncidentReport  # noqa: E402
 from opspilot.orchestrator import Orchestrator  # noqa: E402
 
-SCENARIOS = ["db_pool_exhaustion", "container_oom", "network_latency"]
+SCENARIOS = ["db_pool_exhaustion", "container_oom", "network_latency", "transaction_risk_surge"]
 
 
 @pytest.fixture()
@@ -46,11 +44,11 @@ def _run(orchestrator: Orchestrator, scenario: str) -> IncidentReport:
 
 def test_list_scenarios(orchestrator):
     names = [item["name"] for item in orchestrator.list_scenarios()]
-    assert names == sorted(SCENARIOS), "应恰好列出 3 个内置场景"
+    assert names == sorted(SCENARIOS), "应恰好列出 4 个内置场景"
 
 
 # ---------------------------------------------------------------------------
-# 报告字段完整性（3 场景各跑一遍）
+# 报告字段完整性（4 场景各跑一遍）
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("scenario", SCENARIOS)

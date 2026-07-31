@@ -2,7 +2,33 @@
 output/*
 !output/.gitkeep
 .venv/
+venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
 .pytest_cache/
 .DS_Store
+
+# 打包产物
+*.egg-info/
+dist/
+build/
+
+# 环境变量（可能含密钥）
+.env
+.env.*
+
+# 编辑器临时文件
+*.swp
+*.swo
+*~
+
+# 系统/临时
+tmp/
+.tmp/
+
+# ====== 赛事平台提交材料（不进入 GitHub 开源仓库）======
+docs/submission/
+docs/evidence/
+scripts/generate_ppt.py

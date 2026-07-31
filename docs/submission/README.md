@@ -6,16 +6,17 @@
 
 | 文件 | 用途 | 提交方式 |
 | --- | --- | --- |
-| `作品简介.md` | 初赛必交「作品简介」（正文 494 字，≤500 字要求内），直接复制正文提交至报名平台文本框 | 必交 |
+| `作品简介.md` | 初赛必交「作品简介」（正文 497 字，≤500 字要求内），直接复制正文提交至报名平台文本框 | 必交 |
 | `方案PPT大纲.md` | 初赛必交「方案 PPT」的完整内容稿（14 页，逐页含标题/要点/配图建议），按此制作 PPT 后导出 PDF 提交 | 必交（转 PPT/PDF） |
 | `评审对照检查表.md` | 按评审 5 大维度 + 个性化核验点的自查与答辩准备表，不对外提交，供团队内部使用 | 内部自查 |
+| `答辩QA准备.md` | 评审高概率追问 15 题的问答演练材料（问题/追问点/标准答案/证据位置），不对外提交 | 内部自查 |
 | `README.md` | 本说明文件 | 内部使用 |
 
 ## 制作 PPT 的注意事项
 
 1. 严格按大纲页序制作，确保评审 5 个权重维度（25/25/25/20/5）均有专门页面覆盖；
 2. 大纲中标注的 4 张看板截图位于仓库上层目录：`page1_home.png` / `page2_trace_browser.png` / `page3_evaluation_report.png` / `page4_cost_analysis.png`，建议重新运行看板截取最新图；
-3. 所有数字（5 Agent / 9 Skill / 39 测试用例 / 22 span / 13 Runbook / 11 案例 / 3 场景 100 分）提交前按 `评审对照检查表.md` 第七节复核一遍；
+3. 所有数字（5 Agent / 9 Skill / 61 测试用例 / 10 类白名单动作 / 14 Runbook / 11 案例 / 4 场景 100 分 / 坏 case 区分度差距 65.5 分）提交前按 `评审对照检查表.md` 第七节复核一遍；
 4. 行业 MTTR/人力成本数据在 PPT 中务必标注"行业典型数据"，避免被质疑为本项目实测。
 
 ## 代码包打包建议（可选提交物，强烈建议提交）
@@ -42,8 +43,8 @@ zip -r opspilot-insight.zip opspilot-insight \
 ```bash
 python3 -m pip install -r requirements.txt
 python3 run_demo.py --scenario network_latency --auto-approve   # 五段闭环 + 回滚剧本
-python3 -m pytest tests/ -v                                     # 39 用例
-python3 scripts/replay_eval.py                                  # 回放评测（3 场景）
+python3 -m pytest tests/ -v                                     # 61 用例
+python3 scripts/replay_eval.py                                  # 回放评测（4 场景）
 ```
 
 ## 提交操作建议

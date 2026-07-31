@@ -44,6 +44,15 @@ _FAILURE_PATTERNS = [
         "metric_hint": ("latency", "duration", "p99", "rt"),
         "slow_op_hint": ("http", "grpc", "call"),
     },
+    {
+        "category": "transaction_risk_surge",
+        "log_keywords": [
+            "suspicious transaction", "risk_score", "device fingerprint mismatch",
+            "AccountTakeover", "credential stuffing",
+        ],
+        "metric_hint": ("fraud", "risk", "transaction"),
+        "slow_op_hint": ("RiskDecision", "transfer"),
+    },
 ]
 
 # 变更关联时间窗：告警前 4 小时内的变更视为可疑
@@ -67,6 +76,10 @@ _HYPOTHESIS_TEMPLATES = {
         "with_change": "{service} 调用链网络延迟劣化（服务端处理正常），疑似由变更 {change_id}（{change_title}）引入网络链路问题导致",
         "no_change": "{service} 调用链网络延迟劣化（服务端处理正常），疑似网络链路质量问题",
     },
+    "transaction_risk_surge": {
+        "with_change": "{service} 检测到异常交易激增，疑似由变更 {change_id}（{change_title}）调整风控规则导致误报放大",
+        "no_change": "{service} 检测到异常交易激增，高频大额转出、跨境高风险地区与设备指纹异常信号并发，指向撞库攻击导致的批量账号被盗（外部攻击，无内部变更关联）",
+    },
 }
 
 
@@ -84,6 +97,8 @@ class LogTraceRcaSkill(Skill):
     input_schema = {
         "affected_services": "受影响服务列表",
         "first_alert_at": "最早告警时间（ISO8601）",
+        "multi_hypothesis": "（可选，协商模式）变更强相关时同时产出竞争性假设候选",
+        "supplemental": "（可选，协商模式二轮）补充证据（扩展时间窗日志/变更单详情）",
     }
     output_schema = {
         "candidates": "根因候选列表（假设/置信度/证据链）",
@@ -103,6 +118,8 @@ class LogTraceRcaSkill(Skill):
 
         candidates = self._build_candidates(
             services, log_signal, metric_signal, trace_signal, change_signal, context,
+            multi_hypothesis=bool(payload.get("multi_hypothesis")),
+            supplemental=payload.get("supplemental") or {},
         )
         return {
             "candidates": candidates,
@@ -226,8 +243,11 @@ class LogTraceRcaSkill(Skill):
         trace_signal: Dict[str, Any],
         change_signal: Dict[str, Any],
         context: SkillContext,
+        multi_hypothesis: bool = False,
+        supplemental: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         dominant = log_signal.get("dominant")
+        supplemental = supplemental or {}
         candidates: List[Dict[str, Any]] = []
         if dominant:
             pattern = next(p for p in _FAILURE_PATTERNS if p["category"] == dominant)
@@ -295,10 +315,12 @@ class LogTraceRcaSkill(Skill):
                 ] if related_change else [],
             ))
 
+            # 证据 5（仅协商模式二轮）：补充采集证据（扩展时间窗日志 + 变更单详情）
+            if supplemental:
+                evidences.append(self._make_supplemental_evidence(pattern, supplemental))
+
             # 置信度 = 基线 + 强证据加权 + 弱证据加权
-            strong_count = sum(1 for e in evidences if e["strength"] == "strong")
-            weak_count = sum(1 for e in evidences if e["strength"] == "weak")
-            confidence = min(0.95, round(0.35 + 0.15 * strong_count + 0.05 * weak_count, 2))
+            confidence = self._confidence(evidences)
 
             # 生成假设文本：主嫌疑服务取日志命中最多的受影响服务（避免字母序误选网关）
             hits = log_signal.get("service_hits", {}).get(dominant, {})
@@ -323,6 +345,27 @@ class LogTraceRcaSkill(Skill):
                 "related_change_id": related_change.get("change_id") if (related_change and change_strength == "strong") else None,
             })
 
+            # 协商模式：变更强相关时同时产出"与变更无关"的竞争性假设候选
+            # （变更时间相关但因果链未证实，如 container_oom 的"应用内存泄漏"假设），
+            # 两候选置信度接近时由 Orchestrator 进入多方案协商决策。
+            if multi_hypothesis and related_change and change_strength == "strong":
+                alt_evidences = [dict(e) for e in evidences]
+                for ev in alt_evidences:
+                    if ev["source"] == "changes":
+                        ev["strength"] = "weak"
+                        ev["description"] = (
+                            f"变更 {related_change.get('change_id')} 时间相关但因果链未证实，"
+                            "不排除应用自身缺陷（竞争性假设下降为弱证据）"
+                        )
+                candidates.append({
+                    "category": dominant,
+                    "hypothesis": templates["no_change"].format(service=primary_service),
+                    "service": primary_service,
+                    "confidence": self._confidence(alt_evidences),
+                    "evidences": alt_evidences,
+                    "related_change_id": None,
+                })
+
         # 兜底备选假设：保持候选列表 >= 2，便于展示排序与置信度对比
         candidates.append({
             "category": "generic_dependency",
@@ -343,6 +386,41 @@ class LogTraceRcaSkill(Skill):
             top1=candidates[0]["hypothesis"][:60],
         )
         return candidates
+
+    @staticmethod
+    def _confidence(evidences: List[Dict[str, Any]]) -> float:
+        """置信度 = 基线 0.35 + strong×0.15 + weak×0.05，封顶 0.95。"""
+        strong_count = sum(1 for e in evidences if e["strength"] == "strong")
+        weak_count = sum(1 for e in evidences if e["strength"] == "weak")
+        return min(0.95, round(0.35 + 0.15 * strong_count + 0.05 * weak_count, 2))
+
+    def _make_supplemental_evidence(
+        self, pattern: Dict[str, Any], supplemental: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """由补充采集数据（扩展时间窗日志 + 变更单详情）构建第五维证据。"""
+        extended_logs = supplemental.get("extended_logs") or []
+        matched = [
+            e for e in extended_logs
+            if any(kw in e.get("message", "") for kw in pattern["log_keywords"])
+        ]
+        change_details = supplemental.get("change_details") or []
+        details = [f"[{e.get('service')}] {e.get('message')}" for e in matched[:3]]
+        if change_details:
+            details.append(
+                f"变更单详情核验 {len(change_details)} 条: "
+                + "；".join(f"{c.get('change_id')}（{c.get('title')}）" for c in change_details[:2])
+            )
+        # 扩展窗日志命中 >=3 条为强证据；仅有零星命中或变更单详情为弱证据
+        strength = "strong" if len(matched) >= 3 else (
+            "weak" if (matched or change_details) else "missing"
+        )
+        return self._make_evidence(
+            "supplemental",
+            strength,
+            f"补充采集: 扩展时间窗日志 {len(extended_logs)} 条（命中该模式 {len(matched)} 条），"
+            f"变更单详情 {len(change_details)} 条",
+            details,
+        )
 
     @staticmethod
     def _make_evidence(source: str, strength: str, description: str, details: List[str]) -> Dict[str, Any]:

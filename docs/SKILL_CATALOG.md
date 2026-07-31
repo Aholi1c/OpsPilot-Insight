@@ -157,6 +157,37 @@
 
 ---
 
-> 白名单配置：`config/action_whitelist.yaml`（当前 7 类动作：rollback_change / scale_pool /
-> rolling_restart / config_update / traffic_switch / diagnostic_capture / manual_followup）；
+> 白名单配置：`config/action_whitelist.yaml`（当前 10 类动作：rollback_change / scale_pool /
+> rolling_restart / config_update / traffic_switch / diagnostic_capture / manual_followup /
+> freeze_account / trigger_2fa / notify_team）；
 > 白名单外动作类型默认拒绝，medium/high 风险方案必须经审批（`--auto-approve` 或交互式 y/n）。
+
+---
+
+## 版本管理与贡献
+
+### 版本演进规则
+
+所有 Skill 遵循 [Semantic Versioning 2.0.0](https://semver.org/lang/zh-CN/) 规范：
+
+- **MAJOR**：Breaking Change（输入/输出键删除或语义变更、preconditions 新增必需键、failure_policy 收紧）；
+- **MINOR**：向后兼容的能力新增（新增可选参数、新增输出键、放宽前置条件）；
+- **PATCH**：行为不变的 bug 修复与性能优化。
+
+版本号体现在类属性 `version`、`SkillResult.skill_version`（自动填入）以及本 Catalog 的"版本"行，
+三处必须一致。详细规则与 Breaking Change 处理流程见 [Skill 开发者指南 · 第四章](./SKILL_DEVELOPER_GUIDE.md#四版本管理与兼容性)。
+
+### 贡献新 Skill
+
+1. 参照 [Skill 开发者指南](./SKILL_DEVELOPER_GUIDE.md) 的快速开始示例实现 Skill 并满足八大契约要素；
+2. 在本 Catalog 追加对应小节（与现有 9 个 Skill 格式一致）；
+3. 运行 `pytest` 全量测试 + `python scripts/replay_eval.py` 回放评测确认不回退；
+4. 提交 PR 经 Review 合入（执行类 Skill 需双人 Review + 安全清单）。
+
+详细 PR 流程、Review 标准与安全审查清单见 [Skill 开发者指南 · 第七章](./SKILL_DEVELOPER_GUIDE.md#七贡献指南)。
+
+### Skill Registry 架构
+
+随 Skill 数量增长与第三方贡献引入，注册表将从当前进程内字典演进为分层 Registry
+（Local → Team → Public），支持版本解析、热加载、质量门控与 AgentTeams 生态发布。
+完整设计见 [Skill Registry 架构设计](./SKILL_REGISTRY_DESIGN.md)。

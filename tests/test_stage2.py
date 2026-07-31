@@ -14,13 +14,12 @@ from __future__ import annotations
 
 import json
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
+# src 路径由 tests/conftest.py 统一注入；此处仅保留项目根用于定位数据文件
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 
 from opspilot.config import load_yaml  # noqa: E402
 from opspilot.mcp import build_adapters  # noqa: E402

@@ -25,3 +25,12 @@ whitelist:
   manual_followup:
     description: 创建人工跟进任务（不直接操作生产资源）
     default_risk: low
+  freeze_account:
+    description: 批量冻结/解冻可疑账户（金融风控处置，须登记冻结原因与工单号）
+    default_risk: high
+  trigger_2fa:
+    description: 强制会话下线并要求二次验证（短信/人脸等强验证方式）
+    default_risk: medium
+  notify_team:
+    description: 通知值班/专项团队跟进（不直接操作生产资源）
+    default_risk: low

@@ -7,6 +7,13 @@
     python3 run_demo.py --scenario network_latency                    # 交互式审批（提示 y/n）
     python3 run_demo.py --list-scenarios                              # 列出可用场景
 
+协商模式（Agent 间反馈协商，可选增强，默认关闭）：
+    # 机制 2 演示：container_oom 双根因候选（变更引入配置错误 vs 应用内存泄漏）
+    # 置信度接近 -> 多方案并行生成 -> 打分决策（交互模式下人工从多方案中选择）
+    python3 run_demo.py -s container_oom --negotiation --auto-approve
+    # 机制 1 演示：调高置信度阈值触发证据补充反馈环（扩展时间窗日志 + 变更单详情）
+    python3 run_demo.py -s transaction_risk_surge --negotiation --rca-threshold 0.9 --auto-approve
+
 默认使用 MockProvider（无 API Key、无网络即可完整跑通）；
 如需切换通义千问：export OPSPILOT_LLM_PROVIDER=dashscope && export DASHSCOPE_API_KEY=sk-xxx
 如需切换向量检索：pip install -r requirements-optional.txt && export OPSPILOT_RAG_BACKEND=chroma
@@ -46,6 +53,33 @@ def interactive_approval(plan: dict, risk: dict, incident: dict) -> dict:
                 "reason": "操作人控制台确认" if approved else "操作人控制台拒绝",
             }
         print("请输入 y 或 n")
+
+
+def interactive_plan_selection(options: list) -> dict:
+    """多方案协商交互点：展示各候选方案打分明细，等待操作人选择其一。"""
+    print(f"\n{_LINE}")
+    print("  ⚖ 多方案协商交互点：多个根因候选置信度接近，请从以下方案中选择")
+    print(_LINE)
+    for option in options:
+        plan = option["plan"]
+        breakdown = option["score_breakdown"]
+        print(f"[{option['rank']}] 方案 {plan.get('plan_id')}  score={option['score']}")
+        print(f"    根因假设: {option['candidate'].get('hypothesis')}"
+              f"（置信度 {breakdown['confidence']}）")
+        print(f"    风险等级: {breakdown['risk_level']}  "
+              f"预估恢复时长: {breakdown['estimated_recovery_minutes']} 分钟")
+        for step in plan.get("steps", []):
+            print(f"      {step.get('order')}. [{step.get('action_type')}] {step.get('action')}")
+    while True:
+        answer = input(f"请选择方案 [1-{len(options)}] ").strip()
+        if answer.isdigit() and 1 <= int(answer) <= len(options):
+            return {
+                "index": int(answer) - 1,
+                "selector": "demo-operator",
+                "mode": "interactive",
+                "reason": "操作人从多候选方案中控制台选定",
+            }
+        print(f"请输入 1 到 {len(options)} 之间的数字")
 
 
 def print_report(report: IncidentReport, orchestrator: Orchestrator) -> None:
@@ -94,6 +128,34 @@ def print_report(report: IncidentReport, orchestrator: Orchestrator) -> None:
         print("相似历史案例（RAG 检索）:")
         for case in report.similar_cases:
             print(f"  · [{case.get('id')}] {case.get('title')}（score={case.get('score')}）")
+
+    if report.negotiation:
+        print(f"\n── 协商与反馈（--negotiation） {'─' * 40}")
+        loop = report.negotiation.get("evidence_loop") or {}
+        if loop.get("triggered"):
+            requests = "；".join(
+                f"第 {r['round']} 轮请求 {', '.join(r['missing_evidence'])}"
+                for r in loop.get("requests", [])
+            )
+            outcome = "置信度回升，继续自动流程" if loop.get("resolved") else "仍低于阈值，转人工"
+            print(f"证据补充反馈环: 已触发（{requests}）-> {outcome}")
+        else:
+            print("证据补充反馈环: 未触发（首轮置信度已达标）")
+        plan_neg = report.negotiation.get("plan_negotiation") or {}
+        if plan_neg.get("triggered"):
+            decision = plan_neg.get("decision", {})
+            print(f"多方案协商: {plan_neg.get('candidate_count')} 个候选置信度接近"
+                  f"（差距 {plan_neg.get('confidence_gap')}），并行生成方案后决策")
+            print(f"决策结果  : 选定 {decision.get('chosen_plan_id')}"
+                  f"（score={decision.get('chosen_score')}，方式={decision.get('mode')}）")
+        else:
+            print("多方案协商: 未触发（候选置信度差距未达阈值）")
+        for alt in report.alternative_plans:
+            plan = alt.get("plan", {})
+            print(f"备选方案（未采纳，rank={alt.get('rank')}，score={alt.get('score')}）: "
+                  f"{plan.get('plan_id')}")
+            print(f"  假设: {alt.get('root_cause_hypothesis')}（置信度 {alt.get('root_cause_confidence')}）")
+            print(f"  原因: {alt.get('not_selected_reason')}")
 
     print(f"\n── 修复方案 {'─' * 58}")
     plan = report.remediation_plan
@@ -191,11 +253,21 @@ def main() -> int:
     parser.add_argument("--output-dir", "-o", default=None, help="产物输出目录（默认 ./output）")
     parser.add_argument("--auto-approve", action="store_true",
                         help="自动批准需审批的修复方案（默认交互式提示 y/n）")
+    parser.add_argument("--negotiation", action="store_true",
+                        help="开启 Agent 间反馈协商机制（低置信度证据补充反馈环 + 多方案协商决策）")
+    parser.add_argument("--rca-threshold", type=float, default=None, metavar="FLOAT",
+                        help="覆盖 RCA 置信度阈值（协商模式下低于该值触发证据补充请求，默认 0.6）")
     args = parser.parse_args()
 
+    overrides = {}
+    if args.rca_threshold is not None:
+        overrides["rca_confidence_threshold"] = args.rca_threshold
     orchestrator = Orchestrator(
         output_dir=args.output_dir,
         approval_handler=None if args.auto_approve else interactive_approval,
+        negotiation=args.negotiation or None,
+        negotiation_overrides=overrides,
+        plan_selector=None if args.auto_approve else interactive_plan_selection,
     )
 
     if args.list_scenarios:

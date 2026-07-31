@@ -1,0 +1,80 @@
+{
+  "metrics": [
+    {
+      "name": "fraud_alert_count_per_min",
+      "service": "risk-engine",
+      "unit": "count/min",
+      "labels": {"rule_group": "realtime_fraud_detection"},
+      "points": [
+        {"timestamp": "2026-07-24T13:30:00+08:00", "value": 2},
+        {"timestamp": "2026-07-24T13:40:00+08:00", "value": 2},
+        {"timestamp": "2026-07-24T13:50:00+08:00", "value": 3},
+        {"timestamp": "2026-07-24T14:00:00+08:00", "value": 38},
+        {"timestamp": "2026-07-24T14:10:00+08:00", "value": 96},
+        {"timestamp": "2026-07-24T14:20:00+08:00", "value": 152},
+        {"timestamp": "2026-07-24T14:30:00+08:00", "value": 183},
+        {"timestamp": "2026-07-24T14:35:00+08:00", "value": 187}
+      ]
+    },
+    {
+      "name": "transaction_success_rate_percent",
+      "service": "payment-gateway",
+      "unit": "%",
+      "labels": {"channel": "all"},
+      "points": [
+        {"timestamp": "2026-07-24T13:30:00+08:00", "value": 99.2},
+        {"timestamp": "2026-07-24T13:40:00+08:00", "value": 99.3},
+        {"timestamp": "2026-07-24T13:50:00+08:00", "value": 99.2},
+        {"timestamp": "2026-07-24T14:00:00+08:00", "value": 96.8},
+        {"timestamp": "2026-07-24T14:10:00+08:00", "value": 91.5},
+        {"timestamp": "2026-07-24T14:20:00+08:00", "value": 86.2},
+        {"timestamp": "2026-07-24T14:30:00+08:00", "value": 82.7},
+        {"timestamp": "2026-07-24T14:35:00+08:00", "value": 81.4}
+      ]
+    },
+    {
+      "name": "high_risk_transaction_ratio_percent",
+      "service": "risk-engine",
+      "unit": "%",
+      "labels": {"decision": "REJECT"},
+      "points": [
+        {"timestamp": "2026-07-24T13:30:00+08:00", "value": 0.8},
+        {"timestamp": "2026-07-24T13:40:00+08:00", "value": 0.9},
+        {"timestamp": "2026-07-24T13:50:00+08:00", "value": 0.8},
+        {"timestamp": "2026-07-24T14:00:00+08:00", "value": 3.6},
+        {"timestamp": "2026-07-24T14:10:00+08:00", "value": 6.9},
+        {"timestamp": "2026-07-24T14:20:00+08:00", "value": 9.8},
+        {"timestamp": "2026-07-24T14:30:00+08:00", "value": 12.1},
+        {"timestamp": "2026-07-24T14:35:00+08:00", "value": 12.6}
+      ]
+    },
+    {
+      "name": "high_risk_session_count",
+      "service": "account-service",
+      "unit": "sessions",
+      "labels": {"detector": "device_fingerprint"},
+      "points": [
+        {"timestamp": "2026-07-24T13:30:00+08:00", "value": 0},
+        {"timestamp": "2026-07-24T13:40:00+08:00", "value": 0},
+        {"timestamp": "2026-07-24T13:50:00+08:00", "value": 0},
+        {"timestamp": "2026-07-24T14:00:00+08:00", "value": 7},
+        {"timestamp": "2026-07-24T14:10:00+08:00", "value": 18},
+        {"timestamp": "2026-07-24T14:20:00+08:00", "value": 29},
+        {"timestamp": "2026-07-24T14:30:00+08:00", "value": 38},
+        {"timestamp": "2026-07-24T14:35:00+08:00", "value": 41}
+      ]
+    },
+    {
+      "name": "risk_decision_engine_qps",
+      "service": "risk-engine",
+      "unit": "qps",
+      "labels": {"instance": "risk-engine-7d8f9c6b4-m3xqp"},
+      "points": [
+        {"timestamp": "2026-07-24T13:30:00+08:00", "value": 860},
+        {"timestamp": "2026-07-24T13:50:00+08:00", "value": 852},
+        {"timestamp": "2026-07-24T14:10:00+08:00", "value": 871},
+        {"timestamp": "2026-07-24T14:35:00+08:00", "value": 903}
+      ]
+    }
+  ]
+}

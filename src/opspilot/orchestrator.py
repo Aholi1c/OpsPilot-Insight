@@ -3,14 +3,18 @@
 
 - 结构化上下文传递：Agent 间通过 AgentMessage 传递 Pydantic 序列化数据；
 - 异常捕获与降级：任一阶段失败均记录降级说明并继续产出部分报告；
+- 协商模式（可选增强，默认关闭）：RCA 低置信度证据补充反馈环 +
+  多根因候选多方案并行协商决策，全过程 Trace/审计留痕；
 - 一次运行产出五类可观测产物：incident_report_*.json / trace_*.json /
   run_*.log / audit_*.jsonl / metrics_*.json。
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -20,7 +24,8 @@ from .config import load_yaml
 from .evaluation.cost import compute_cost_section, load_pricing
 from .llm.base import LLMProvider, create_provider
 from .mcp import build_adapters
-from .models import Incident, IncidentReport
+from .models import AgentMessage, Incident, IncidentReport
+from .negotiation import rank_plan_options
 from .observability import AuditLog, JsonLogger, MetricsCollector, Tracer
 from .rag import KnowledgeStore, create_retriever
 from .skills import (
@@ -44,6 +49,7 @@ SCENARIO_DESCRIPTIONS = {
     "db_pool_exhaustion": "订单服务数据库连接池耗尽（变更引入连接泄漏）",
     "container_oom": "支付服务容器 OOMKilled（变更引入缓存配置错误）",
     "network_latency": "网关到用户服务网络延迟劣化（网络 ACL 变更）",
+    "transaction_risk_surge": "支付平台异常交易激增（撞库攻击导致账号被盗，金融风控场景）",
 }
 
 
@@ -58,6 +64,9 @@ class Orchestrator:
         console: bool = True,
         approval_handler: Optional[Callable[..., Dict[str, Any]]] = None,
         knowledge_dir: Union[str, Path, None] = None,
+        negotiation: Optional[bool] = None,
+        negotiation_overrides: Optional[Dict[str, Any]] = None,
+        plan_selector: Optional[Callable[..., Dict[str, Any]]] = None,
     ):
         self.project_root = Path(project_root) if project_root else _PROJECT_ROOT
         self.scenarios_dir = self.project_root / "examples" / "scenarios"
@@ -71,10 +80,27 @@ class Orchestrator:
         )
         # 审批回调：None 时自动批准（--auto-approve / 测试），run_demo 可注入交互式审批
         self.approval_handler = approval_handler
+        # 协商模式开关（None=按 config/agents.yaml negotiation.enabled，默认关闭）
+        # 与阈值覆盖（如 CLI --rca-threshold）；plan_selector 为多方案人工选择回调
+        self.negotiation = negotiation
+        self.negotiation_overrides = dict(negotiation_overrides or {})
+        self.plan_selector = plan_selector
         self.llm = llm or create_provider()
         self.console = console
         # 最近一次运行的产物路径（便于入口脚本/测试引用）
         self.last_artifacts: Dict[str, Path] = {}
+
+    def _negotiation_config(self) -> Dict[str, Any]:
+        """合并协商配置：agents.yaml negotiation 段 <- 构造参数覆盖。"""
+        cfg = dict(load_yaml(self.config_path).get("negotiation") or {})
+        cfg.setdefault("enabled", False)
+        cfg.setdefault("rca_confidence_threshold", 0.6)
+        cfg.setdefault("max_evidence_rounds", 1)
+        cfg.setdefault("candidate_gap_threshold", 0.15)
+        cfg.update(self.negotiation_overrides)
+        if self.negotiation is not None:
+            cfg["enabled"] = bool(self.negotiation)
+        return cfg
 
     def list_scenarios(self) -> List[Dict[str, str]]:
         """扫描场景目录，返回可运行场景清单。"""
@@ -137,10 +163,22 @@ class Orchestrator:
 
         degraded = False
         degradation_notes: List[str] = []
-        timeline: List[Dict[str, str]] = []
+        timeline: List[Dict[str, Any]] = []
+        # 协商模式装配（默认 enabled=False，全部旁路，行为与原流水线一致）
+        neg_cfg = self._negotiation_config()
+        neg_enabled = bool(neg_cfg.get("enabled"))
+        negotiation_section: Dict[str, Any] = {}
+        alternative_plans: List[Dict[str, Any]] = []
 
-        def _mark(event: str) -> None:
-            timeline.append({"time": datetime.now().astimezone().isoformat(timespec="seconds"), "event": event})
+        def _mark(event: str, message: Optional[AgentMessage] = None) -> None:
+            """流水线时间线打点；协商事件附带结构化 AgentMessage（请求-响应留痕）。"""
+            entry: Dict[str, Any] = {
+                "time": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "event": event,
+            }
+            if message is not None:
+                entry["agent_message"] = message.model_dump()
+            timeline.append(entry)
 
         logger.info(f"════ OpsPilot-Insight 流水线启动 ════", scenario=scenario, trace_id=tracer.trace_id,
                     rag_backend=retriever.backend_name)
@@ -175,27 +213,54 @@ class Orchestrator:
             # ---- 阶段 2：根因分析（失败则报告无根因，转人工）----
             _mark("RcaAgent 开始")
             try:
+                if neg_enabled:
+                    stage_ctx = {**stage_ctx, "negotiation": neg_cfg}
                 rca_result = rca_agent.handle(self._make_message("incident", stage_ctx, tracer))
                 stage_ctx = rca_result.content
+                # 协商机制 1：低置信度证据补充反馈环（重试上限防死循环）
+                if neg_enabled:
+                    stage_ctx = self._run_evidence_loop(
+                        stage_ctx, neg_cfg, rca_agent, adapters, tracer, audit,
+                        logger, _mark, negotiation_section,
+                    )
+                if stage_ctx.pop("low_confidence_handoff", False):
+                    degraded = True
+                    degradation_notes.append(
+                        "根因置信度经证据补充后仍低于阈值"
+                        f"（{neg_cfg.get('rca_confidence_threshold')}），转人工排查"
+                    )
             except Exception as exc:  # noqa: BLE001 —— 降级路径
                 logger.error(f"RcaAgent 阶段失败，进入降级模式: {exc}")
                 degraded = True
                 degradation_notes.append(f"根因分析阶段失败（{exc}），报告不含根因结论，建议人工排查")
                 stage_ctx = {**stage_ctx, "root_cause_candidates": [],
                              "selected_root_cause": None, "analysis": ""}
+            stage_ctx.pop("negotiation", None)
             _mark("RcaAgent 结束")
 
             # ---- 阶段 3：修复规划（失败则报告无方案，转人工）----
-            _mark("PlannerAgent 开始")
-            try:
-                plan_result = planner_agent.handle(self._make_message("root_cause", stage_ctx, tracer))
-                stage_ctx = plan_result.content
-            except Exception as exc:  # noqa: BLE001 —— 降级路径
-                logger.error(f"PlannerAgent 阶段失败，进入降级模式: {exc}")
-                degraded = True
-                degradation_notes.append(f"修复规划阶段失败（{exc}），报告不含修复方案，建议人工制定")
-                stage_ctx = {**stage_ctx, "remediation_plan": None}
-            _mark("PlannerAgent 结束")
+            # 协商机制 2：多根因候选置信度接近时，多方案并行生成 + 决策选择
+            plan_negotiated = False
+            if neg_enabled and stage_ctx.get("selected_root_cause"):
+                try:
+                    plan_negotiated, alternative_plans, stage_ctx = self._run_plan_negotiation(
+                        stage_ctx, neg_cfg, planner_agent, tracer, audit,
+                        logger, _mark, negotiation_section,
+                    )
+                except Exception as exc:  # noqa: BLE001 —— 协商失败退回默认单方案路径
+                    logger.warning(f"多方案协商失败（{exc}），退回默认单方案规划路径")
+                    plan_negotiated, alternative_plans = False, []
+            if not plan_negotiated:
+                _mark("PlannerAgent 开始")
+                try:
+                    plan_result = planner_agent.handle(self._make_message("root_cause", stage_ctx, tracer))
+                    stage_ctx = plan_result.content
+                except Exception as exc:  # noqa: BLE001 —— 降级路径
+                    logger.error(f"PlannerAgent 阶段失败，进入降级模式: {exc}")
+                    degraded = True
+                    degradation_notes.append(f"修复规划阶段失败（{exc}），报告不含修复方案，建议人工制定")
+                    stage_ctx = {**stage_ctx, "remediation_plan": None}
+                _mark("PlannerAgent 结束")
 
             # ---- 阶段 4：安全执行（失败则报告无执行结果，转人工）----
             _mark("ExecutorAgent 开始")
@@ -258,6 +323,8 @@ class Orchestrator:
             postmortem=stage_ctx.get("postmortem"),
             degraded=degraded,
             degradation_notes=degradation_notes,
+            negotiation=negotiation_section,
+            alternative_plans=alternative_plans,
             timeline=timeline,
         )
 
@@ -282,6 +349,246 @@ class Orchestrator:
         )
         logger.close()
         return report
+
+    # ------------------------------------------------------------------
+    # 协商机制 1：RCA 低置信度证据补充反馈环
+    # ------------------------------------------------------------------
+    def _run_evidence_loop(
+        self,
+        stage_ctx: Dict[str, Any],
+        neg_cfg: Dict[str, Any],
+        rca_agent: RcaAgent,
+        adapters: Dict[str, Any],
+        tracer: Tracer,
+        audit: AuditLog,
+        logger: JsonLogger,
+        _mark: Callable[..., None],
+        negotiation_section: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """处理 RcaAgent 的证据补充请求：MCP 补充采集 -> 注入上下文 -> 二轮分析。
+
+        重试上限 max_evidence_rounds（默认 1 轮）防死循环；全过程记录
+        Trace（rca.evidence_request / rca.reanalysis 由 RcaAgent 侧产生）、
+        审计事件与结构化 AgentMessage（pipeline_timeline）。
+        """
+        max_rounds = int(neg_cfg.get("max_evidence_rounds", 1))
+        loop_record: Dict[str, Any] = {"triggered": False, "rounds_used": 0, "requests": []}
+        rounds = 0
+        while stage_ctx.pop("needs_more_evidence", False) and rounds < max_rounds:
+            rounds += 1
+            missing = list(stage_ctx.pop("missing_evidence", []))
+            loop_record["triggered"] = True
+            loop_record["requests"].append({"round": rounds, "missing_evidence": missing})
+            _mark(
+                f"RcaAgent 请求补充证据（第 {rounds} 轮）: {', '.join(missing)}",
+                message=AgentMessage(
+                    sender=rca_agent.name, receiver="orchestrator",
+                    message_type="evidence_request",
+                    content={"missing_evidence": missing, "round": rounds},
+                    trace_id=tracer.trace_id,
+                ),
+            )
+
+            # 通过 MCP 适配器补充采集（Mock 适配器提供扩展数据，无扩展数据则为空）
+            extended_logs = adapters["logging"].query_extended_logs()
+            change_details = (
+                adapters["change"].get_change_details()
+                if "change_ticket_details" in missing else []
+            )
+            supplemental = {"extended_logs": extended_logs, "change_details": change_details}
+            audit.record(
+                "evidence_supplement",
+                round=rounds, missing_evidence=missing,
+                extended_log_count=len(extended_logs),
+                change_detail_count=len(change_details),
+            )
+            logger.info(
+                f"  ⇄ Orchestrator 补充采集完成: 扩展时间窗日志 {len(extended_logs)} 条，"
+                f"变更单详情 {len(change_details)} 条，注入上下文进行第 {rounds + 1} 轮分析"
+            )
+            _mark(
+                f"Orchestrator 注入补充证据（扩展日志 {len(extended_logs)} 条 / "
+                f"变更详情 {len(change_details)} 条）",
+                message=AgentMessage(
+                    sender="orchestrator", receiver=rca_agent.name,
+                    message_type="evidence_supplement",
+                    content={"extended_log_count": len(extended_logs),
+                             "change_detail_count": len(change_details)},
+                    trace_id=tracer.trace_id,
+                ),
+            )
+
+            # 二轮分析（rca.reanalysis span 由 RcaAgent 内部创建）
+            rca_result = rca_agent.handle(self._make_message("incident", {
+                **stage_ctx,
+                "negotiation": neg_cfg,
+                "supplemental_evidence": supplemental,
+            }, tracer))
+            stage_ctx = rca_result.content
+
+        loop_record["rounds_used"] = rounds
+        selected = stage_ctx.get("selected_root_cause")
+        loop_record["resolved"] = bool(selected)
+        if loop_record["triggered"]:
+            audit.record(
+                "rca_reanalysis",
+                rounds_used=rounds, resolved=loop_record["resolved"],
+                confidence=(selected or {}).get("confidence"),
+            )
+        negotiation_section.update({
+            "enabled": True,
+            "config": {k: v for k, v in neg_cfg.items() if k != "enabled"},
+            "evidence_loop": loop_record,
+        })
+        return stage_ctx
+
+    # ------------------------------------------------------------------
+    # 协商机制 2：多根因候选 -> 多方案并行生成 -> 决策选择
+    # ------------------------------------------------------------------
+    def _run_plan_negotiation(
+        self,
+        stage_ctx: Dict[str, Any],
+        neg_cfg: Dict[str, Any],
+        planner_agent: PlannerAgent,
+        tracer: Tracer,
+        audit: AuditLog,
+        logger: JsonLogger,
+        _mark: Callable[..., None],
+        negotiation_section: Dict[str, Any],
+    ):
+        """置信度接近的多根因候选并行生成方案，按打分/人工决策选定其一。
+
+        返回 (是否走了协商路径, alternative_plans, 新 stage_ctx)。
+        """
+        gap_threshold = float(neg_cfg.get("candidate_gap_threshold", 0.15))
+        candidates = stage_ctx.get("root_cause_candidates") or []
+        if len(candidates) < 2:
+            return False, [], stage_ctx
+        top_confidence = candidates[0]["confidence"]
+        contenders = [
+            c for c in candidates if top_confidence - c["confidence"] < gap_threshold
+        ]
+        if len(contenders) < 2:
+            return False, [], stage_ctx
+
+        gap = round(top_confidence - contenders[1]["confidence"], 4)
+        logger.info(
+            f"  ⚖ 检测到 {len(contenders)} 个置信度接近的根因候选（差距 {gap} < "
+            f"{gap_threshold}），进入多方案协商模式"
+        )
+        audit.record(
+            "plan_negotiation",
+            candidate_count=len(contenders), confidence_gap=gap,
+            gap_threshold=gap_threshold,
+            hypotheses=[c["hypothesis"] for c in contenders],
+        )
+        _mark(f"多方案协商开始（{len(contenders)} 个候选并行规划）")
+
+        # 并行方案生成：每个候选一个独立 PlannerAgent 会话，
+        # span 结构为 plan.negotiation 下的多个并行 agent.PlannerAgent 兄弟节点
+        with tracer.start_span("plan.negotiation", kind="INTERNAL", attributes={
+            "negotiation.candidate_count": len(contenders),
+            "negotiation.confidence_gap": gap,
+            "negotiation.gap_threshold": gap_threshold,
+        }):
+            with ThreadPoolExecutor(max_workers=len(contenders)) as pool:
+                futures = []
+                for candidate in contenders:
+                    message = self._make_message(
+                        "root_cause", {**stage_ctx, "selected_root_cause": candidate}, tracer,
+                    )
+                    ctx = contextvars.copy_context()
+                    futures.append(pool.submit(ctx.run, planner_agent.handle, message))
+                results = [f.result() for f in futures]
+
+        pairs = []
+        for candidate, result in zip(contenders, results):
+            plan = result.content.get("remediation_plan")
+            if plan:
+                pairs.append({"candidate": candidate, "plan": plan})
+                _mark(
+                    f"PlannerAgent 提交候选方案 {plan.get('plan_id')}"
+                    f"（假设: {candidate['hypothesis'][:40]}…）",
+                    message=AgentMessage(
+                        sender=planner_agent.name, receiver="orchestrator",
+                        message_type="plan_proposal",
+                        content={"plan_id": plan.get("plan_id"),
+                                 "root_cause_hypothesis": candidate["hypothesis"],
+                                 "risk_level": plan.get("risk_level")},
+                        trace_id=tracer.trace_id,
+                    ),
+                )
+        if len(pairs) < 2:
+            return False, [], stage_ctx
+
+        # 决策：风险 × 置信度 × 预估恢复时长打分排序；
+        # 交互模式由人工从多方案中选择（plan_selector），--auto-approve 自动选最优
+        options = rank_plan_options(pairs)
+        chosen_index, mode, selector, reason = 0, "auto", "score-ranking", "自动选择打分最优方案"
+        if self.plan_selector is not None:
+            decision = self.plan_selector(options)
+            chosen_index = min(int(decision.get("index", 0)), len(options) - 1)
+            mode = decision.get("mode", "interactive")
+            selector = decision.get("selector", "unknown")
+            reason = decision.get("reason", "")
+        chosen = options[chosen_index]
+        others = [o for i, o in enumerate(options) if i != chosen_index]
+
+        audit.record(
+            "plan_selection",
+            mode=mode, selector=selector, reason=reason,
+            chosen_plan_id=chosen["plan"].get("plan_id"),
+            options=[{
+                "rank": o["rank"], "plan_id": o["plan"].get("plan_id"),
+                "score": o["score"], **o["score_breakdown"],
+            } for o in options],
+        )
+        logger.info(
+            f"  ✔ 多方案决策完成（{mode}）: 选定 {chosen['plan'].get('plan_id')}"
+            f"（score={chosen['score']}），备选 {len(others)} 个记入 alternative_plans"
+        )
+        _mark(
+            f"多方案决策: 选定 {chosen['plan'].get('plan_id')}（score={chosen['score']}，{mode}）",
+            message=AgentMessage(
+                sender="orchestrator", receiver=planner_agent.name,
+                message_type="plan_decision",
+                content={"chosen_plan_id": chosen["plan"].get("plan_id"),
+                         "score": chosen["score"], "mode": mode, "selector": selector},
+                trace_id=tracer.trace_id,
+            ),
+        )
+
+        alternative_plans = [{
+            "rank": o["rank"],
+            "score": o["score"],
+            "score_breakdown": o["score_breakdown"],
+            "root_cause_hypothesis": o["candidate"]["hypothesis"],
+            "root_cause_confidence": o["candidate"]["confidence"],
+            "plan": o["plan"],
+            "not_selected_reason": f"打分 {o['score']} 低于选定方案 {chosen['score']}"
+            if mode == "auto" else f"人工决策未选中（{selector}）",
+        } for o in others]
+
+        negotiation_section.setdefault("enabled", True)
+        negotiation_section.setdefault(
+            "config", {k: v for k, v in neg_cfg.items() if k != "enabled"})
+        negotiation_section["plan_negotiation"] = {
+            "triggered": True,
+            "candidate_count": len(contenders),
+            "confidence_gap": gap,
+            "decision": {
+                "mode": mode, "selector": selector, "reason": reason,
+                "chosen_plan_id": chosen["plan"].get("plan_id"),
+                "chosen_score": chosen["score"],
+                "chosen_hypothesis": chosen["candidate"]["hypothesis"],
+            },
+        }
+        new_ctx = {
+            **stage_ctx,
+            "selected_root_cause": chosen["candidate"],
+            "remediation_plan": chosen["plan"],
+        }
+        return True, alternative_plans, new_ctx
 
     @staticmethod
     def _make_message(message_type: str, content: Dict[str, Any], tracer: Tracer):

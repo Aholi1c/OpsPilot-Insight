@@ -98,9 +98,13 @@ class AgentMessage(BaseModel):
 
 
 class Evidence(BaseModel):
-    """单条证据：来源维度 + 强度 + 描述 + 关键明细。"""
+    """单条证据：来源维度 + 强度 + 描述 + 关键明细。
 
-    source: Literal["logs", "metrics", "traces", "changes"]
+    supplemental 为协商模式下证据补充请求（evidence request loop）注入的
+    补充采集证据（扩展时间窗日志 / 变更单详情），默认流程不产生。
+    """
+
+    source: Literal["logs", "metrics", "traces", "changes", "supplemental"]
     strength: EvidenceStrength
     description: str
     details: List[str] = Field(default_factory=list)
@@ -218,7 +222,8 @@ class PostmortemReport(BaseModel):
 
     incident_id: str
     title: str = ""
-    timeline: List[Dict[str, str]] = Field(default_factory=list)
+    # 协商模式下时间线条目可携带结构化 AgentMessage（value 为 dict），故用 Any
+    timeline: List[Dict[str, Any]] = Field(default_factory=list)
     root_cause: str = ""
     actions_taken: List[str] = Field(default_factory=list)
     effect: str = ""
@@ -244,4 +249,8 @@ class IncidentReport(BaseModel):
     postmortem: Optional[PostmortemReport] = None
     degraded: bool = False
     degradation_notes: List[str] = Field(default_factory=list)
-    timeline: List[Dict[str, str]] = Field(default_factory=list)
+    # 协商模式（--negotiation）产物：默认模式下两者均为空，报告结论不受影响
+    negotiation: Dict[str, Any] = Field(default_factory=dict)  # 反馈环与多方案协商的过程记录
+    alternative_plans: List[Dict[str, Any]] = Field(default_factory=list)  # 未被选中的候选方案（含打分）
+    # 协商模式下时间线条目可携带结构化 AgentMessage（value 为 dict），故用 Any
+    timeline: List[Dict[str, Any]] = Field(default_factory=list)

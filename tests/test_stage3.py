@@ -2,7 +2,7 @@
 """阶段 3 测试：Golden Dataset / 规则评估 / 成本三维分解 / 预算告警 / 回放评测。
 
 覆盖点：
-1. 回放脚本：3 场景回放 + Golden 构建 + 评测报告一键完成，各场景总分 ≥ 85；
+1. 回放脚本：全场景回放 + Golden 构建 + 评测报告一键完成，各场景总分 ≥ 85；
 2. Golden Dataset 构建幂等：重复构建样本数与 case_id 不变，expected 为 curated；
 3. 规则评估打分正确性：构造故意错误的 actual 应在对应规则项扣分；
 4. 成本三维分解求和一致性：per-Agent / per-Skill / per-Model 求和均等于总成本；
@@ -16,14 +16,12 @@ from __future__ import annotations
 import copy
 import json
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
+# src/ 与 scripts/ 路径由 tests/conftest.py 统一注入；此处仅保留项目根用于定位数据文件
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_PROJECT_ROOT / "src"))
-sys.path.insert(0, str(_PROJECT_ROOT / "scripts"))
 
 from replay_eval import SCENARIOS, run_replay  # noqa: E402
 
@@ -43,7 +41,7 @@ from opspilot.orchestrator import Orchestrator  # noqa: E402
 
 @pytest.fixture(scope="module")
 def replay_env(tmp_path_factory):
-    """模块级共享：完整跑一次回放评测（3 场景 + Golden 构建 + 评测报告）。"""
+    """模块级共享：完整跑一次回放评测（全场景 + Golden 构建 + 评测报告）。"""
     root = tmp_path_factory.mktemp("stage3")
     output_dir = root / "output"
     golden_path = root / "golden" / "golden_dataset.jsonl"
@@ -55,9 +53,9 @@ def replay_env(tmp_path_factory):
 # 1. 回放评测一键完成
 # ---------------------------------------------------------------------------
 
-def test_replay_three_scenarios_all_pass(replay_env):
+def test_replay_all_scenarios_all_pass(replay_env):
     report = replay_env["report"]
-    assert report["sample_count"] == 3
+    assert report["sample_count"] == len(SCENARIOS)
     assert report["all_passed_85"] is True
     scenarios = {r["scenario"] for r in report["results"]}
     assert scenarios == set(SCENARIOS)
@@ -88,7 +86,7 @@ def test_eval_report_comparison_with_previous(replay_env):
     data = json.loads(paths["json"].read_text(encoding="utf-8"))
     comparison = data["comparison"]
     assert comparison["available"] is True
-    assert len(comparison["per_case"]) == 3
+    assert len(comparison["per_case"]) == len(SCENARIOS)
 
 
 # ---------------------------------------------------------------------------
@@ -98,9 +96,9 @@ def test_eval_report_comparison_with_previous(replay_env):
 def test_golden_dataset_idempotent_rebuild(replay_env):
     golden_path = replay_env["golden_path"]
     first = load_golden_dataset(golden_path)
-    assert len(first) == 3
+    assert len(first) == len(SCENARIOS)
     assert all(s["expected"]["source"] == "curated" for s in first), \
-        "3 个内置场景均应使用人工校准的 expected.json"
+        "所有内置场景均应使用人工校准的 expected.json"
 
     # 重复构建：样本数与 case_id 集合不变（同 case 幂等覆盖更新）
     rebuilt = build_golden_dataset(replay_env["output_dir"], golden_path=golden_path)

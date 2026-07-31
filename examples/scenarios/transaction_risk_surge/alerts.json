@@ -1,0 +1,97 @@
+{
+  "alerts": [
+    {
+      "fingerprint": "a1f7c3e92b8d4051",
+      "status": "firing",
+      "labels": {
+        "alertname": "AbnormalTransactionSurge",
+        "severity": "critical",
+        "service": "risk-engine",
+        "namespace": "prod-fin",
+        "instance": "risk-engine-7d8f9c6b4-m3xqp:9090",
+        "rule_group": "realtime_fraud_detection",
+        "team": "risk-control"
+      },
+      "annotations": {
+        "summary": "risk-engine 检测到异常交易激增",
+        "description": "近 5 分钟高风险交易判定 187 笔/分钟（基线 2 笔/分钟），命中规则：单账户高频大额转出 + 跨境高风险地区收款方"
+      },
+      "startsAt": "2026-07-24T14:32:00+08:00",
+      "generatorURL": "http://prometheus.prod-fin.internal/graph?g0.expr=fraud_alert_count_per_min"
+    },
+    {
+      "fingerprint": "a1f7c3e92b8d4051",
+      "status": "firing",
+      "labels": {
+        "alertname": "AbnormalTransactionSurge",
+        "severity": "critical",
+        "service": "risk-engine",
+        "namespace": "prod-fin",
+        "instance": "risk-engine-7d8f9c6b4-m3xqp:9090",
+        "rule_group": "realtime_fraud_detection",
+        "team": "risk-control"
+      },
+      "annotations": {
+        "summary": "risk-engine 检测到异常交易激增",
+        "description": "近 5 分钟高风险交易判定 187 笔/分钟（基线 2 笔/分钟），命中规则：单账户高频大额转出 + 跨境高风险地区收款方（重复推送）"
+      },
+      "startsAt": "2026-07-24T14:34:00+08:00",
+      "generatorURL": "http://prometheus.prod-fin.internal/graph?g0.expr=fraud_alert_count_per_min"
+    },
+    {
+      "fingerprint": "b6e2d8a41c9f5372",
+      "status": "firing",
+      "labels": {
+        "alertname": "AccountTakeoverSuspected",
+        "severity": "critical",
+        "service": "risk-engine",
+        "namespace": "prod-fin",
+        "instance": "risk-engine-7d8f9c6b4-m3xqp:9090",
+        "rule_group": "account_security",
+        "team": "risk-control"
+      },
+      "annotations": {
+        "summary": "risk-engine 批量账号被盗嫌疑（疑似撞库攻击）",
+        "description": "5 分钟内 47 个账户同时命中『高频大额转出 + 异地登录 + 新收款人』组合规则，与撞库攻击后的批量盗刷特征一致"
+      },
+      "startsAt": "2026-07-24T14:33:20+08:00",
+      "generatorURL": "http://prometheus.prod-fin.internal/graph?g0.expr=account_takeover_rule_hits"
+    },
+    {
+      "fingerprint": "c9d4f1b73a2e6584",
+      "status": "firing",
+      "labels": {
+        "alertname": "DeviceFingerprintMismatch",
+        "severity": "warning",
+        "service": "account-service",
+        "namespace": "prod-fin",
+        "instance": "account-service-5c7b8d9f2-k8wnt:8080",
+        "team": "account-security"
+      },
+      "annotations": {
+        "summary": "account-service 登录会话设备指纹异常比例超阈值",
+        "description": "近 10 分钟登录会话设备指纹与历史指纹不一致比例升至 23%（阈值 5%），大量会话来自未见过的设备与代理 IP 段"
+      },
+      "startsAt": "2026-07-24T14:34:10+08:00",
+      "generatorURL": "http://prometheus.prod-fin.internal/graph?g0.expr=device_fingerprint_mismatch_ratio"
+    },
+    {
+      "fingerprint": "d2a8e5c96f4b1793",
+      "status": "firing",
+      "labels": {
+        "alertname": "TransactionSuccessRateDrop",
+        "severity": "critical",
+        "service": "payment-gateway",
+        "namespace": "prod-fin",
+        "instance": "payment-gateway-6f9d7c8b3-p2vzr:8443",
+        "team": "payment"
+      },
+      "annotations": {
+        "summary": "payment-gateway 交易成功率跌破阈值",
+        "description": "交易成功率由基线 99.2% 跌至 81.4%（阈值 97%），大量交易被风控拦截拒绝"
+      },
+      "startsAt": "2026-07-24T14:35:05+08:00",
+      "generatorURL": "http://prometheus.prod-fin.internal/graph?g0.expr=transaction_success_rate_percent"
+    }
+  ]
+}

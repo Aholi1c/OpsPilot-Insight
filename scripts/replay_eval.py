@@ -25,7 +25,7 @@ from opspilot.evaluation import (  # noqa: E402
 )
 from opspilot.orchestrator import Orchestrator  # noqa: E402
 
-SCENARIOS = ["db_pool_exhaustion", "container_oom", "network_latency"]
+SCENARIOS = ["db_pool_exhaustion", "container_oom", "network_latency", "transaction_risk_surge"]
 _LINE = "═" * 78
 
 

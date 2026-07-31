@@ -1,0 +1,47 @@
+{
+  "description": "扩展时间窗日志（告警前 24h）：协商模式证据补充采集数据，仅在 RcaAgent 发起 evidence request 后由 Orchestrator 通过 Mock MCP 适配器注入，默认流水线不读取本文件",
+  "logs": [
+    {
+      "timestamp": "2026-07-23T02:14:08.331+08:00",
+      "level": "WARN",
+      "service": "auth-service",
+      "logger": "com.example.auth.LoginAttemptMonitor",
+      "message": "credential stuffing pattern detected: 312 failed logins from 41 IPs in 10min window, success-after-failures ratio climbing"
+    },
+    {
+      "timestamp": "2026-07-23T03:47:52.108+08:00",
+      "level": "WARN",
+      "service": "auth-service",
+      "logger": "com.example.auth.DeviceFingerprintChecker",
+      "message": "device fingerprint mismatch on 17 accounts within 30min, all successful logins after repeated failures"
+    },
+    {
+      "timestamp": "2026-07-23T05:22:19.760+08:00",
+      "level": "WARN",
+      "service": "risk-engine",
+      "logger": "com.example.risk.ScoreAggregator",
+      "message": "suspicious transaction pre-signal: risk_score p95 rising from 0.31 to 0.58 since 02:00, no risk rule change deployed"
+    },
+    {
+      "timestamp": "2026-07-23T07:03:44.415+08:00",
+      "level": "WARN",
+      "service": "auth-service",
+      "logger": "com.example.auth.LoginAttemptMonitor",
+      "message": "credential stuffing wave escalating: 1,204 failed logins in past hour, hit list overlaps known leaked-credential corpus"
+    },
+    {
+      "timestamp": "2026-07-23T08:41:30.902+08:00",
+      "level": "WARN",
+      "service": "risk-engine",
+      "logger": "com.example.risk.AccountTakeoverDetector",
+      "message": "AccountTakeover pre-alert: 9 accounts added new payees within 5min of first-time-device login, device fingerprint mismatch confirmed"
+    },
+    {
+      "timestamp": "2026-07-23T09:36:12.577+08:00",
+      "level": "WARN",
+      "service": "risk-engine",
+      "logger": "com.example.risk.ScoreAggregator",
+      "message": "suspicious transaction volume climbing steadily since 02:00 without any internal rule change, external attack signature strengthening"
+    }
+  ]
+}

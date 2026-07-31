@@ -3,6 +3,18 @@
 # 注意：本文件由 src/opspilot/config.py 的轻量 YAML 子集解析器加载，
 # 仅支持嵌套映射 / 标量列表 / 块字面量（|）。
 
+# Agent 间反馈协商机制（可选增强，默认关闭，开启后默认流水线行为不变时才生效）
+# - 机制 1（低置信度反馈环）：RcaAgent Top1 置信度低于 rca_confidence_threshold 时
+#   向 Orchestrator 发起证据补充请求，补充采集后二轮分析，重试上限 max_evidence_rounds；
+# - 机制 2（多方案协商）：Top 候选置信度差距小于 candidate_gap_threshold 时，
+#   PlannerAgent 为每个候选并行生成方案，按 风险×置信度×预估恢复时长 打分决策。
+# 开启方式：enabled 置 true，或 run_demo.py --negotiation（CLI 优先于本配置）。
+negotiation:
+  enabled: false
+  rca_confidence_threshold: 0.6
+  max_evidence_rounds: 1
+  candidate_gap_threshold: 0.15
+
 agents:
   alert_agent:
     name: AlertAgent
@@ -32,6 +44,7 @@ agents:
       - 关联日志/链路/指标/变更四个维度的异常信号
       - 生成根因候选（假设 + 证据链 + 证据强度 + 置信度）
       - 输出可读的根因分析结论
+      - 协商模式下置信度不足时向 Orchestrator 发起证据补充请求并二轮分析
     inputs:
       - Incident（含受影响服务与首告警时间）
     outputs:
@@ -54,6 +67,7 @@ agents:
       - 检索 Runbook 预案库与历史案例，方案引用标准预案依据
       - 评估方案风险等级并声明审批要求
       - 生成对应的回滚计划
+      - 协商模式下为置信度接近的多个根因候选并行生成独立方案
     inputs:
       - 选定根因（含关联变更信息与相似历史案例）
     outputs:

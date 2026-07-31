@@ -26,7 +26,7 @@
 - 行业典型现状（注明为行业典型数据，非本项目实测）：告警风暴下人工筛选定位根因，MTTR 常达数小时；7×24 值班人力成本高；处置经验散落在个人经验中，无法复用
 - 三大痛点：定位慢（多信号源人工关联）、执行险（手工操作无防护）、不沉淀（复盘流于形式）
 - 场景价值：故障自愈是 SRE/AIOps 的核心场景，流程高度标准化（告警→根因→处置→验证），是多 Agent 协同的天然落地场景
-- 行业可复制性：金融、电商、云服务等所有有线上系统的行业均适用
+- 行业可复制性（已实证，非承诺）：同一套 Skill 已零修改跨入金融风控场景（transaction_risk_surge，撞库盗刷处置），金融、电商、云服务等所有有线上系统的行业均适用
 
 **建议配图**：左侧"人工处置流程"时间轴（告警→拉群→排查→审批→操作→观察，标注小时级），右侧"OpsPilot 自愈流程"时间轴（分钟级），形成对比。
 
@@ -40,7 +40,7 @@
 - 编排层：Orchestrator 五段串行编排（Alert→RCA→Planner→Executor→Verifier），结构化上下文传递（Pydantic AgentMessage）+ 分段降级容错
 - 能力层：9 个标准化 Skill + MCP 适配器（monitoring/logging/tracing/change/execution）+ 可插拔 LLM Provider（Mock/DashScope）
 - 基座层（差异化）：自研 Tracer + JSONL 结构化日志 + 审计事件流 + 指标采集 + 评测引擎 + 成本治理
-- 数据资产层：RAG 知识库（13 Runbook + 11 案例）+ Golden Dataset，随运行持续增长
+- 数据资产层：RAG 知识库（14 Runbook + 11 案例）+ Golden Dataset（好 case 4 条 + 坏 case 6 条），随运行持续增长
 
 **建议配图**：三层架构图（Mermaid 或绘图工具重绘），顶层五个 Agent 方块横排，中层 Skill/MCP/LLM，底层可观测/评测/成本基座 + 知识库，用箭头标注数据流。
 
@@ -57,8 +57,9 @@
 - ExecutorAgent：风险评估 → 审批 → 安全执行（失败自动回滚 + 备选动作）
 - VerifierAgent：恢复前后指标对比验证 + 复盘报告 + 案例沉淀回写知识库
 - 上下文传递机制：全部通过 Pydantic 强类型模型（Incident/Plan/Execution/Verification）逐段传递，无自由文本黑盒；任一段失败记录降级说明并继续产出部分报告
+- 协商机制（--negotiation 可选开启，默认行为不变）：① RCA 低置信度时向上游发起证据补充请求（needs_more_evidence→MCP 补采→二轮分析，重试上限 1 轮）；② 多根因候选→PlannerAgent 并行多方案→量化打分（置信度×风险×恢复时长）排序→人工选择或自动选优，落选方案记入报告 alternative_plans——证明五 Agent 具备"请求-响应-二次决策"的反馈协同，而非单向脚本
 
-**建议配图**：五段流水线横向流程图，每个 Agent 下方标注其调用的 Skill；段间箭头上标注传递的结构化对象名。
+**建议配图**：五段流水线横向流程图，每个 Agent 下方标注其调用的 Skill；段间箭头上标注传递的结构化对象名；叠加两条反馈回路虚线箭头（RCA→Orchestrator 证据补采、多候选→多方案打分选择）。
 
 ---
 
@@ -67,12 +68,13 @@
 **页标题**：高风险动作四重防护：白名单 · 审批 · 回滚 · 审计
 
 **要点内容**：
-- 白名单校验：config/action_whitelist.yaml 定义 7 类允许动作，白名单外一律拒绝并记审计
+- 白名单校验：config/action_whitelist.yaml 定义 10 类允许动作（含金融风控 freeze_account/trigger_2fa/notify_team），白名单外一律拒绝并记审计
 - 幂等键：sha256(incident_id + 动作内容)，同一事件重复动作直接跳过
 - 人工审批：medium/high 风险方案必须审批才执行；审批人/时间/决定/理由全部写入审计流
 - 回滚检查点：每个动作执行前记录状态快照，失败按检查点逆序自动回滚
 - 回滚演示剧本（network_latency 场景，可离线复现）：首动作执行失败 → 自动回滚检查点 → 备选动作（流量切换）成功 → 人工跟进工单
 - 审计证据链：whitelist_check → approval → checkpoint → execute(failed) → rollback → checkpoint → execute(success)，全部带 trace_id 落盘 audit_*.jsonl
+- 权限模型：RBAC 五角色三权分立（执行/审批/治理互斥）+ 风险等级×审批人数矩阵（金融 freeze_account 属 high，双人复核），已实现与生产演进诚实分层，详见 docs/RBAC_DESIGN.md
 
 **建议配图**：左侧四件套图标式列表；右侧 network_latency 回滚剧本时序图（动作 1 失败 ✗ → 回滚 ⟲ → 动作 2 成功 ✓），可直接截取 run_demo.py 终端输出。
 
@@ -99,6 +101,8 @@
 
 - 每个 Skill 满足赛事必选项：输入/输出 Schema、调用条件、依赖工具（MCP/RAG/LLM）、失败处理策略、验证方式、复用价值说明、版本号
 - 统一基类约束（skills/base.py）：Schema 校验、异常捕获、Trace span 自动埋点
+- 跨行业复用已实证：金融风控场景下 6 个 Skill 零修改复用、3 个仅扩展声明式数据表（算法零改动），详见 docs/CROSS_SCENARIO_REUSE.md
+- 工程化治理：开发者指南（八要素契约/SemVer/依赖 DAG/贡献流程，docs/SKILL_DEVELOPER_GUIDE.md）+ 三层 Registry 与质量门控设计（docs/SKILL_REGISTRY_DESIGN.md）
 - 完整规范见 docs/SKILL_CATALOG.md（v2.0）
 
 **建议配图**：Skill 清单表格 + 一个 Skill 的规范卡片示例（截取 SKILL_CATALOG.md 中任一 Skill 的定义，展示 Schema/调用条件/失败处理/版本字段）。
@@ -148,10 +152,11 @@
 - Golden Dataset：从运行 Trace 产物自动提取构建（同 case 幂等更新），人工校准 expected.json 优先
 - 五维规则评估（0-100 加权）：根因命中 0.30 / 动作类型正确 0.20 / 验证一致 0.15 / 闭环完整 0.20 / 安全合规 0.15
 - LLM-as-Judge：根因质量/方案合理性/复盘质量三维评分 + 评语（默认 MockJudge 离线可跑，可切 DashScope）
-- 一键回放评测：scripts/replay_eval.py，3 场景回放 + 构建 + 评估 + 与上次对比，当前 3 场景全部 100 分
+- 一键回放评测：scripts/replay_eval.py，4 场景回放 + 构建 + 评估 + 与上次对比，当前 4 场景（含金融）全部 100 分
+- 评测区分度已验证（回应"满分是否太松"）：6 条人工构造坏 case 用同一评分逻辑评估，好 case 均分 100 vs 坏 case 均分 34.47（差距 65.5 分），每类错误在对应维度可独立检出（docs/evidence/eval_discrimination_report.md）
 - 数据飞轮：运行 → Trace → Golden Dataset → 评测 → 改进 → 再运行
 
-**建议配图**：数据飞轮环形图（运行/Trace/Golden/评测/改进五节点循环）+ 评测报告页面截图（page3_evaluation_report.png，含五维雷达图）。
+**建议配图**：数据飞轮环形图（运行/Trace/Golden/评测/改进五节点循环）+ 评测报告页面截图（page3_evaluation_report.png，含五维雷达图）+ 好/坏 case 得分对比条形图（100 vs 34.47）。
 
 ---
 
@@ -172,12 +177,12 @@
 
 ## P11 运行验证（评审维度：工程落地运行验证，红线应对）
 
-**页标题**：可验证：39 个测试用例全通过，3 场景离线一键复现
+**页标题**：可验证：61 个测试用例全通过，4 场景离线一键复现
 
 **要点内容**：
-- pytest 39 用例全部通过（test_e2e / test_stage2 / test_stage3），覆盖闭环、白名单、幂等、回滚、RAG、案例沉淀、评分、成本一致性、预算告警、回放评测
-- 无 API Key、无网络：默认 MockProvider，3 个场景（db_pool_exhaustion / container_oom / network_latency）离线完整复现
-- 一条命令验证：`python3 run_demo.py --scenario network_latency --auto-approve`（含失败回滚剧本）；`python3 scripts/replay_eval.py`（3 场景 100 分）
+- pytest 61 用例全部通过（e2e / stage2 / stage3 / 金融场景 / 协商机制 / 评测区分度），覆盖闭环、白名单、幂等、回滚、RAG、案例沉淀、评分、成本一致性、预算告警、回放评测、跨行业复用、区分度断言
+- 无 API Key、无网络：默认 MockProvider，4 个场景（db_pool_exhaustion / container_oom / network_latency / transaction_risk_surge）离线完整复现
+- 一条命令验证：`python3 run_demo.py --scenario network_latency --auto-approve`（含失败回滚剧本）；`python3 scripts/replay_eval.py`（4 场景 100 分）
 - Streamlit 四页看板：系统总览 / Trace 浏览器 / 评测报告 / 成本分析（Grafana 风格）
 - 工程质量：核心零重依赖（主流程仅 pydantic），自研 YAML 子集解析器 / Tracer / 日志组件
 
@@ -187,16 +192,17 @@
 
 ## P12 复用价值与行业可复制性（评审维度：场景价值 25% + Skill 生态复用 25%）
 
-**页标题**：标准化组件设计：换一套 MCP 适配器即可迁移新场景
+**页标题**：跨行业复用已实证：6 个 Skill 零修改跨入金融风控
 
 **要点内容**：
-- Skill 层复用：9 个 Skill 与业务解耦，Schema 化接口可直接编入其他 Agent 团队
-- MCP 适配器契约：Mock 实现与真实系统（Prometheus/SLS/变更系统等）共享同一接口契约，迁移只需替换适配器
+- 实证而非承诺：新增金融风控场景 transaction_risk_surge（撞库盗刷处置），9 个 Skill 中 6 个**零修改**复用（AlertFusion/ImpactMapping/RunbookRag/CaseRetrieval/SafeExecute/RecoveryVerify），3 个仅扩展声明式数据表（算法零改动），同一评测引擎下 100 分（docs/CROSS_SCENARIO_REUSE.md）
+- 迁移边际成本 = 一套场景数据 + 若干知识表条目 + 白名单动作注册，不动 Skill 代码
+- MCP 适配器契约：Mock 实现与真实系统（Prometheus/SLS/变更系统/风控系统等）共享同一接口契约，迁移只需替换适配器
 - 基座组件独立复用：Tracer / 评测引擎 / 成本治理不绑定运维场景，任何多 Agent 系统均可接入
 - 知识资产可迁移：Runbook/案例采用 JSONL 标准格式，企业可导入自有知识库
-- 适用行业：金融、电商、云服务、制造等所有存在线上系统运维的行业
+- 适用行业：金融（已验证）、电商、云服务、制造等所有存在线上系统的行业
 
-**建议配图**：分层复用示意图：底部基座组件（可独立开源）→ 中部 Skill 库（跨场景复用）→ 顶部场景层（运维自愈 / 其他多 Agent 场景虚线框）。
+**建议配图**：逐 Skill 复用对照表（截取 CROSS_SCENARIO_REUSE.md §2，标注"零修改 6 个 / 数据表扩展 3 个"）+ 分层复用示意图：底部基座组件（可独立开源）→ 中部 Skill 库（跨场景复用）→ 顶部场景层（运维自愈 / 金融风控实线框 / 其他行业虚线框）。
 
 ---
 
@@ -205,10 +211,10 @@
 **页标题**：复赛/决赛路线与 Apache 2.0 开源计划
 
 **要点内容**：
-- 复赛计划：接入真实 DashScope 推理与真实 Judge；扩充故障场景与 Golden Dataset 样本量；接入真实监控数据源 MCP 适配器
-- 决赛计划：多事故并发编排；审批流对接 IM（钉钉/飞书）；评测门禁接入 CI
-- 开源规划：以 Apache 2.0 协议开源；可观测/评测/成本组件拆分为独立包优先开源；提供 Skill 编写规范文档与贡献指南
-- 社区贡献方向：多 Agent 系统评测方法论与 Golden Dataset 构建实践分享
+- 复赛计划：接入真实 DashScope 推理与真实 Judge；扩充故障场景与 Golden Dataset 样本量；接入真实监控数据源 MCP 适配器；RBAC 多角色审批落地（docs/RBAC_DESIGN.md 生产演进层）
+- 决赛计划：多事故并发编排；审批流对接 IM（钉钉/飞书）与 SSO；评测门禁接入 CI
+- 开源规划：Apache 2.0 License 已附（仓库根目录）；可观测/评测/成本组件拆分为独立包优先开源；Skill 治理机制已文档化——开发者指南（八要素契约/SemVer/贡献流程）+ 三层 Registry 与质量门控设计（docs/SKILL_DEVELOPER_GUIDE.md / docs/SKILL_REGISTRY_DESIGN.md）
+- 社区贡献方向：多 Agent 系统评测方法论（含坏 case 区分度验证方法）与 Golden Dataset 构建实践分享
 
 **建议配图**：三段时间轴（初赛已完成 → 复赛 → 决赛），每段下挂 2-3 个里程碑。
 
@@ -220,7 +226,7 @@
 
 **要点内容**：
 - 一句话总结：五 Agent 自愈闭环解决"跑得通"，内建可观测/评测/成本基座解决"敢上线"
-- 三个数字回顾：5 Agent · 9 Skill · 39 测试用例全通过
+- 四个数字回顾：5 Agent · 9 Skill（6 个零修改跨行业复用）· 61 测试用例全通过 · 4 场景 100 分（评测区分度 65.5 分已验证）
 - 团队信息 / 联系方式 / 代码仓库地址（自行填写）
 - 致谢：阿里云 × DataWhale
 

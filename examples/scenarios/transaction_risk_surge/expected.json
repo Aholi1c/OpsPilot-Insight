@@ -1,0 +1,11 @@
+{
+  "description": "transaction_risk_surge 场景的人工校准标准答案（Golden Dataset expected 优先来源）",
+  "root_cause_keywords": ["撞库", "账号被盗", "异常交易"],
+  "related_change_id": null,
+  "expected_action_types": ["freeze_account", "trigger_2fa", "notify_team"],
+  "expected_execution_status": ["success"],
+  "expected_verification": {
+    "passed": true,
+    "alerts_cleared": true
+  }
+}

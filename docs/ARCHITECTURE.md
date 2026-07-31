@@ -170,7 +170,7 @@ pipeline.run (INTERNAL)
 
 | 防线 | 机制 | 审计事件 |
 | --- | --- | --- |
-| ① 白名单 | `config/action_whitelist.yaml` 定义 7 类允许动作；白名单外一律拒绝（动作状态 `rejected_whitelist`） | `whitelist_check` |
+| ① 白名单 | `config/action_whitelist.yaml` 定义 10 类允许动作；白名单外一律拒绝（动作状态 `rejected_whitelist`） | `whitelist_check` |
 | ② 人工审批 | risk_guard 判定 overall_risk；medium/high 必须审批（交互式 y/n 或 --auto-approve），拒绝则整个方案不执行 | `approval` |
 | ③ 幂等键 | `sha256(incident_id + 动作内容)`，同一事件内重复动作直接跳过（`skipped_idempotent`） | `execute` |
 | ④ 回滚检查点 | 每个动作执行前记录快照；失败时按检查点**逆序**自动回滚，随后续行备选（fallback）动作 | `checkpoint` / `rollback` |
@@ -184,7 +184,67 @@ pipeline.run (INTERNAL)
 - **预算越界不熔断**：成本超 `budget.per_incident` 只记 `budget_alert` 审计事件
   并标红，不中断自愈流程（可用性优先于成本约束的取舍，阈值可配）。
 
-## 6. 评测数据飞轮
+## 6. 协商与反馈机制（可选增强，默认关闭）
+
+五个 Agent 并非只沿固定流水线单向传递结果：开启协商模式后，Agent 之间具备
+**"提出请求 → 补充响应 → 二次决策"** 的反馈协商能力，全过程以结构化
+`AgentMessage`、专属 Span 与审计事件留痕（自主协同可观测）。
+
+**开启方式**：`config/agents.yaml` 的 `negotiation.enabled: true`，或
+`run_demo.py --negotiation`（`--rca-threshold` 可临时覆盖置信度阈值）。
+默认关闭时全部逻辑旁路，四场景运行结果与原流水线完全一致。
+
+### 6.1 机制 1：RCA 低置信度证据补充反馈环
+
+RcaAgent 根因置信度低于阈值（`rca_confidence_threshold`，默认 0.6）时，
+**不直接降级转人工**，而是向 Orchestrator 发起证据补充请求：
+
+```
+RcaAgent 首轮分析 → Top1 置信度 < 阈值
+   │  返回 needs_more_evidence + 缺失数据类型清单
+   │  （extended_time_window_logs / change_ticket_details / ...，
+   │    由 weak/missing 证据维度推导）
+   ▼
+Orchestrator 经 MCP 适配器补充采集
+   │  logging.query_extended_logs()（场景目录 logs_extended.json）
+   │  change.get_change_details()（变更单 diff 详情）
+   ▼
+RcaAgent 二轮分析（补充证据作为第五维 supplemental 证据参与置信度计算）
+   │  达标 → 正常续行；仍低于阈值且重试上限已到（max_evidence_rounds，
+   ▼  默认 1 轮防死循环）→ 走原有降级路径转人工
+```
+
+留痕：Span `rca.evidence_request` / `rca.reanalysis`（挂在 agent.RcaAgent 下）、
+审计事件 `evidence_request` / `evidence_supplement` / `rca_reanalysis` /
+`rca_low_confidence_handoff`、`pipeline_timeline` 中的结构化 AgentMessage
+（`evidence_request` / `evidence_supplement`），报告 `negotiation.evidence_loop`
+记录触发轮次与结果。
+
+### 6.2 机制 2：多根因候选 → 多方案并行 → 决策选择
+
+RcaAgent 产出多个置信度接近的根因候选（差距 < `candidate_gap_threshold`，
+默认 0.15，如 container_oom 的"变更引入内存膨胀 0.95" vs "应用内存泄漏
+0.85"竞争假设）时，进入多方案协商：
+
+1. **并行方案生成**：PlannerAgent 为每个候选独立生成方案（含各自风险评估），
+   Span 结构为 `plan.negotiation` 下多个并行 `agent.PlannerAgent` 兄弟节点；
+2. **量化决策**（`src/opspilot/negotiation.py`）：
+   `score = 置信度 × 风险因子 / (1 + 预估恢复时长/60)`，确定性可复现，
+   打分明细全部写入审计事件 `plan_selection`；
+3. **选择**：交互模式由人工从多方案中选择（复用审批交互通道），
+   `--auto-approve` 自动选打分最优；
+4. **落选方案留证**：未选中方案（含打分明细与落选原因）记入报告
+   `alternative_plans` 字段，决策过程记入 `negotiation.plan_negotiation`。
+
+### 6.3 与原流水线的关系
+
+- 两个机制均为 Orchestrator 内的**可选增强分支**：协商配置未开启时代码
+  路径完全旁路；协商路径自身异常也会回退默认单方案路径（不引入新故障点）；
+- 机制 1 失败的最终去向仍是原有降级路径（转人工），保持决策边界不变；
+- 相关测试：`tests/test_negotiation.py`（触发/重试上限/多方案生成与选择/
+  默认模式回归守护）。
+
+## 7. 评测数据飞轮
 
 系统内建"运行 → 沉淀 → 评测 → 改进"的数据闭环：
 
@@ -221,7 +281,7 @@ pipeline.run (INTERNAL)
 - **标准答案人工校准优先**：`examples/scenarios/<场景>/expected.json` 为 curated
   真值，避免"用自己的输出评自己"的自证循环。
 
-## 7. 扩展点一览
+## 8. 扩展点一览
 
 | 扩展目标 | 需要改动 | 不需要改动 |
 | --- | --- | --- |

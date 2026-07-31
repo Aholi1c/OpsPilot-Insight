@@ -1,0 +1,67 @@
+{
+  "logs": [
+    {
+      "timestamp": "2026-07-24T14:30:12.418+08:00",
+      "level": "WARN",
+      "service": "risk-engine",
+      "logger": "com.finpay.risk.engine.RiskDecisionEngine",
+      "message": "suspicious transaction detected: transaction_id=TXN-20260724-8802913, account_id=ACC-59102, amount=49800.00 CNY, destination=cross_border(KH), risk_score=0.94, rule=HIGH_AMOUNT_FREQUENT_TRANSFER"
+    },
+    {
+      "timestamp": "2026-07-24T14:31:03.907+08:00",
+      "level": "ERROR",
+      "service": "risk-engine",
+      "logger": "com.finpay.risk.engine.RiskDecisionEngine",
+      "message": "suspicious transaction rejected: transaction_id=TXN-20260724-8803177, account_id=ACC-61447, amount=50000.00 CNY, destination=cross_border(MM), risk_score=0.97, rule=HIGH_RISK_COUNTRY"
+    },
+    {
+      "timestamp": "2026-07-24T14:31:44.230+08:00",
+      "level": "WARN",
+      "service": "account-service",
+      "logger": "com.finpay.account.security.DeviceFingerprintService",
+      "message": "device fingerprint mismatch: account_id=ACC-59102, historical_fp=fp_a91b33e0, current_fp=fp_c37d5f28, login_ip=203.0.113.77（代理 IP 段，异地登录）"
+    },
+    {
+      "timestamp": "2026-07-24T14:32:21.665+08:00",
+      "level": "ERROR",
+      "service": "risk-engine",
+      "logger": "com.finpay.risk.engine.AccountTakeoverDetector",
+      "message": "AccountTakeover pattern hit: account_id=ACC-59102 5 分钟内发起 12 笔大额转出（历史日均 0.3 笔），收款人均为新增，risk_score=0.96"
+    },
+    {
+      "timestamp": "2026-07-24T14:33:02.114+08:00",
+      "level": "ERROR",
+      "service": "risk-engine",
+      "logger": "com.finpay.risk.engine.RiskDecisionEngine",
+      "message": "suspicious transaction rejected: transaction_id=TXN-20260724-8804552, account_id=ACC-63820, amount=48600.00 CNY, destination=cross_border(KH), risk_score=0.95, rule=HIGH_AMOUNT_FREQUENT_TRANSFER+NEW_PAYEE"
+    },
+    {
+      "timestamp": "2026-07-24T14:33:38.542+08:00",
+      "level": "WARN",
+      "service": "risk-engine",
+      "logger": "com.finpay.risk.engine.AccountTakeoverDetector",
+      "message": "credential stuffing 特征确认: 命中账户在 13:50-14:20 均出现『多次登录失败后成功登录』序列，登录 IP 集中在 3 个代理网段，随后批量发起大额转出"
+    },
+    {
+      "timestamp": "2026-07-24T14:34:07.883+08:00",
+      "level": "ERROR",
+      "service": "payment-gateway",
+      "logger": "com.finpay.payment.TransactionProcessor",
+      "message": "transaction blocked by risk control: transaction_id=TXN-20260724-8805310, decision=REJECT, risk_score=0.95, reason=suspicious transaction (account takeover suspected)"
+    },
+    {
+      "timestamp": "2026-07-24T14:34:52.196+08:00",
+      "level": "WARN",
+      "service": "account-service",
+      "logger": "com.finpay.account.security.DeviceFingerprintService",
+      "message": "device fingerprint mismatch ratio 23.1% over threshold 5%: 近 10 分钟 1420 个登录会话中 328 个设备指纹与历史不一致"
+    },
+    {
+      "timestamp": "2026-07-24T14:35:10.027+08:00",
+      "level": "INFO",
+      "service": "settlement-service",
+      "logger": "com.finpay.settlement.BatchSettlementJob",
+      "message": "T+1 结算批次 BATCH-20260724-03 处理完成，共 182,443 笔，耗时 214s，无异常"
+    }
+  ]
+}

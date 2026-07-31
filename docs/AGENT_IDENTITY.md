@@ -27,12 +27,12 @@
 | --- | --- |
 | **Name** | `rca_agent` / RcaAgent |
 | **Role** | 多维根因分析专家 |
-| **Capabilities** | ① 关联日志/链路/指标/变更四维异常信号 ② 生成根因候选（假设 + 证据链 + 证据强度 strong/weak/missing + 置信度）③ 输出可读根因分析结论 |
-| **Inputs** | `Incident`（含受影响服务与首告警时间） |
-| **Outputs** | 根因候选列表（`RootCauseCandidate[]`）与选定根因（含证据链、关联变更单号） |
+| **Capabilities** | ① 关联日志/链路/指标/变更四维异常信号 ② 生成根因候选（假设 + 证据链 + 证据强度 strong/weak/missing + 置信度）③ 输出可读根因分析结论 ④ 协商模式：置信度低于阈值时向 Orchestrator 发起证据补充请求（缺失数据类型清单），获补充证据后二轮分析（重试上限防死循环）；变更强相关时产出竞争性假设候选供多方案协商 |
+| **Inputs** | `Incident`（含受影响服务与首告警时间）；协商模式二轮追加 `supplemental_evidence`（扩展时间窗日志 / 变更单详情） |
+| **Outputs** | 根因候选列表（`RootCauseCandidate[]`）与选定根因（含证据链、关联变更单号）；协商模式可能输出 `needs_more_evidence` 信号 + 缺失数据类型清单 |
 | **Dependencies** | Skill: `log_trace_rca`、`case_retrieval`（相似历史案例注入分析上下文）；MCP: logging / monitoring / tracing / change；LLM: rca_analysis 结论生成 |
-| **DecisionBoundary** | 只做根因诊断与证据陈述，不生成修复方案；置信度不足时如实标注、不臆断 |
-| **Trace** | Span `agent.RcaAgent` → 子 Span `skill.log_trace_rca` / `llm.complete` |
+| **DecisionBoundary** | 只做根因诊断与证据陈述，不生成修复方案；置信度不足时如实标注、不臆断（协商模式下先请求补充证据，重试上限后仍不足才转人工） |
+| **Trace** | Span `agent.RcaAgent` → 子 Span `skill.log_trace_rca` / `llm.complete`；协商模式追加 `rca.evidence_request` / `rca.reanalysis` |
 
 ## 3. PlannerAgent（已实现）
 
@@ -40,12 +40,12 @@
 | --- | --- |
 | **Name** | `planner_agent` / PlannerAgent |
 | **Role** | 修复方案规划专家 |
-| **Capabilities** | ① 基于选定根因生成分步修复方案（含可执行命令与预期效果）② 评估风险等级（low/medium/high）并声明审批要求 ③ 生成对应回滚计划 |
+| **Capabilities** | ① 基于选定根因生成分步修复方案（含可执行命令与预期效果）② 评估风险等级（low/medium/high）并声明审批要求 ③ 生成对应回滚计划 ④ 协商模式：为多个置信度接近的根因候选并行生成独立方案（含各自风险评估），供打分决策 / 人工选择 |
 | **Inputs** | 选定根因（含主嫌疑服务与关联变更信息） |
 | **Outputs** | `RemediationPlan`（修复步骤 / 风险等级 / 审批要求 / 回滚计划 / 方案说明） |
 | **Dependencies** | Skill: `runbook_rag`（方案引用 Runbook 依据）、`case_retrieval`（参考历史处置）；规则引擎（按根因类别生成方案骨架，steps 携带白名单动作类型）；LLM: plan_narrative 方案叙述 |
 | **DecisionBoundary** | 只产出方案不执行任何变更；medium 及以上风险必须声明需人工审批；无可信根因时输出高风险"冻结发布 + 转人工"兜底方案 |
-| **Trace** | Span `agent.PlannerAgent` → 子 Span `llm.complete` |
+| **Trace** | Span `agent.PlannerAgent` → 子 Span `llm.complete`；协商模式下多个并行 `agent.PlannerAgent` span 挂在 `plan.negotiation` 下 |
 
 ## 4. ExecutorAgent（已实现，阶段 2）
 
@@ -87,3 +87,24 @@ AlertAgent ──Incident──► RcaAgent ──RootCause──► PlannerAgen
 
 所有 Agent 由 Orchestrator 统一装配与调度，共享同一个 Tracer（一次运行一个 trace_id），
 Agent 间通过 `AgentMessage`（Pydantic 序列化）传递结构化上下文。
+
+## 协商与反馈回路（可选增强，`--negotiation` 开启，默认关闭）
+
+串行主线之上，Agent 间具备两条反馈协商回路（详见 ARCHITECTURE.md §6）：
+
+```
+① 证据补充反馈环
+RcaAgent ──needs_more_evidence+缺失清单──► Orchestrator
+    ◄──MCP 补充采集（扩展时间窗日志/变更单详情）──┘
+RcaAgent 二轮分析（重试上限 max_evidence_rounds 防死循环，仍不足才转人工）
+
+② 多方案协商决策
+RcaAgent 产出置信度接近的竞争候选（差距 < candidate_gap_threshold）
+    ──► PlannerAgent × N 并行独立规划 ──► 打分排序（风险×置信度×恢复时长）
+    ──► 人工选择 / --auto-approve 自动选最优，落选方案记入 alternative_plans
+```
+
+两条回路的"请求-响应"均以结构化 `AgentMessage` 记入 pipeline_timeline，
+并有专属 Span（`rca.evidence_request` / `rca.reanalysis` / `plan.negotiation`）
+与审计事件（`evidence_request` / `evidence_supplement` / `rca_reanalysis` /
+`plan_negotiation` / `plan_selection`）留痕。

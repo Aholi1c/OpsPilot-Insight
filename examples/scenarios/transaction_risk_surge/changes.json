@@ -1,0 +1,40 @@
+{
+  "changes": [
+    {
+      "change_id": "CHG-20260724-0027",
+      "service": "marketing-portal",
+      "type": "deployment",
+      "title": "营销活动页 v3.2.1 发布：7 月大促活动页样式更新",
+      "release_ticket": "REL-20260724-9103",
+      "submitted_by": "wangfang",
+      "start_time": "2026-07-24T12:40:00+08:00",
+      "end_time": "2026-07-24T12:47:00+08:00",
+      "status": "success",
+      "diff_summary": "仅前端活动页样式与文案更新，不涉及交易链路与风控服务"
+    },
+    {
+      "change_id": "CHG-20260721-0102",
+      "service": "risk-engine",
+      "type": "config",
+      "title": "风控规则包 v2026.29 例行更新：新增 3 条跨境交易限额规则",
+      "release_ticket": "REL-20260721-9021",
+      "submitted_by": "liuyang",
+      "start_time": "2026-07-21T10:00:00+08:00",
+      "end_time": "2026-07-21T10:08:00+08:00",
+      "status": "success",
+      "diff_summary": "例行规则包更新，灰度验证 48 小时无误报率上升，已于 07-23 全量"
+    },
+    {
+      "change_id": "CHG-20260723-0088",
+      "service": "settlement-service",
+      "type": "deployment",
+      "title": "清结算服务 v4.1.7 发布：T+1 结算批次拆分优化",
+      "release_ticket": "REL-20260723-9077",
+      "submitted_by": "zhaolei",
+      "start_time": "2026-07-23T16:00:00+08:00",
+      "end_time": "2026-07-23T16:12:00+08:00",
+      "status": "success",
+      "diff_summary": "结算批次按商户维度拆分，仅影响 T+1 离线链路，不涉及实时交易与风控"
+    }
+  ]
+}

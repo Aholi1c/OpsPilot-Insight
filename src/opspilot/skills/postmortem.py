@@ -159,6 +159,10 @@ class PostmortemSkill(Skill):
                 "网络 ACL / 安全组变更纳入变更管控平台，强制灰度并同步基线策略",
                 "为跨可用区链路配置端到端拨测，缩短网络劣化的发现时间",
             ],
+            "transaction_risk_surge": [
+                "登录链路增加撞库特征限流与设备指纹强校验，提升账号被盗攻击的拦截前置度",
+                "建立账户批量冻结/解冻标准预案，误冻结账户当日人工复核并补偿",
+            ],
         }
         improvements.extend(by_category.get(category, ["根因未收敛，安排专项人工复盘"]))
         if execution:

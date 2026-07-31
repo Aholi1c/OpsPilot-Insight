@@ -64,6 +64,8 @@ class LoggingAdapter(BaseMockAdapter):
 
     source_name = "logging"
     file_name = "logs.json"
+    # 扩展时间窗日志（协商模式证据补充采集用，场景目录可选提供）
+    extended_file_name = "logs_extended.json"
 
     def query_logs(
         self,
@@ -79,6 +81,17 @@ class LoggingAdapter(BaseMockAdapter):
         if keyword:
             logs = [x for x in logs if keyword in x.get("message", "")]
         return logs
+
+    def query_extended_logs(self) -> List[Dict[str, Any]]:
+        """查询扩展时间窗日志（响应 RcaAgent 的证据补充请求）。
+
+        场景目录未提供 logs_extended.json 时返回空列表（模拟真实环境
+        中日志平台保留周期外无数据可补的情形）。
+        """
+        path = self.scenario_dir / self.extended_file_name
+        if not path.exists():
+            return []
+        return json.loads(path.read_text(encoding="utf-8")).get("logs", [])
 
 
 class TracingAdapter(BaseMockAdapter):
@@ -144,6 +157,19 @@ class ChangeAdapter(BaseMockAdapter):
                 continue
             result.append(change)
         return result
+
+    def get_change_details(self) -> List[Dict[str, Any]]:
+        """查询全部变更单详情（含 diff_summary，响应证据补充请求）。"""
+        return [
+            {
+                "change_id": c.get("change_id"),
+                "service": c.get("service"),
+                "title": c.get("title"),
+                "diff_summary": c.get("diff_summary", ""),
+                "release_ticket": c.get("release_ticket", ""),
+            }
+            for c in self._load().get("changes", [])
+        ]
 
 
 class ExecutionAdapter(BaseMockAdapter):
