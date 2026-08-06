@@ -32,3 +32,4 @@ tmp/
 docs/submission/
 docs/evidence/
 scripts/generate_ppt.py
+scripts/capture_dashboard.py
