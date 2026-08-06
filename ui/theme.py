@@ -68,9 +68,11 @@ section[data-testid="stSidebar"] .stMarkdown p {{
 }}
 footer {{visibility: hidden;}}
 
-/* Remove default streamlit padding */
+/* Remove default streamlit padding.
+   顶部留出 4.5rem：Streamlit 的 stHeader 为 60px 高的绝对定位不透明顶栏
+   （z-index 999990），padding 不足会导致自定义 .top-header 标题被其遮挡。 */
 .block-container {{
-    padding-top: 1.5rem !important;
+    padding-top: 4.5rem !important;
     padding-bottom: 1rem !important;
 }}
 
