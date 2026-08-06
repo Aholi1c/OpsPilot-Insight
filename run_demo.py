@@ -6,6 +6,7 @@
     python3 run_demo.py --scenario db_pool_exhaustion --auto-approve  # 自动审批跑完五段闭环
     python3 run_demo.py --scenario network_latency                    # 交互式审批（提示 y/n）
     python3 run_demo.py --list-scenarios                              # 列出可用场景
+    python3 run_demo.py -s container_oom --auto-approve --no-sediment  # 反复演示不污染知识库
 
 协商模式（Agent 间反馈协商，可选增强，默认关闭）：
     # 机制 2 演示：container_oom 双根因候选（变更引入配置错误 vs 应用内存泄漏）
@@ -21,11 +22,15 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
+_PROJECT_ROOT = Path(__file__).resolve().parent
+
 # 将 src 加入模块搜索路径（免安装直接运行）
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 
 from opspilot.models import IncidentReport  # noqa: E402
 from opspilot.orchestrator import Orchestrator  # noqa: E402
@@ -257,37 +262,55 @@ def main() -> int:
                         help="开启 Agent 间反馈协商机制（低置信度证据补充反馈环 + 多方案协商决策）")
     parser.add_argument("--rca-threshold", type=float, default=None, metavar="FLOAT",
                         help="覆盖 RCA 置信度阈值（协商模式下低于该值触发证据补充请求，默认 0.6）")
+    parser.add_argument("--no-sediment", action="store_true",
+                        help="复盘案例不写回仓库知识库（使用临时拷贝，适合反复演示）")
     args = parser.parse_args()
 
     overrides = {}
     if args.rca_threshold is not None:
         overrides["rca_confidence_threshold"] = args.rca_threshold
-    orchestrator = Orchestrator(
-        output_dir=args.output_dir,
-        approval_handler=None if args.auto_approve else interactive_approval,
-        negotiation=args.negotiation or None,
-        negotiation_overrides=overrides,
-        plan_selector=None if args.auto_approve else interactive_plan_selection,
-    )
 
-    if args.list_scenarios:
-        print("可用场景：")
-        for item in orchestrator.list_scenarios():
-            print(f"  - {item['name']:<24} {item['description']}")
-        return 0
-
-    if not args.scenario:
-        parser.print_help()
-        return 2
-
+    # --no-sediment：知识库改用临时拷贝，复盘案例只写入临时目录，退出时清理
+    tmp_root = None
+    knowledge_dir = None
     try:
-        report = orchestrator.run(args.scenario)
-    except ValueError as exc:  # 未知场景等入参错误
-        print(f"错误: {exc}", file=sys.stderr)
-        return 2
+        if args.no_sediment:
+            tmp_root = Path(tempfile.mkdtemp(prefix="opspilot_demo_"))
+            knowledge_dir = tmp_root / "knowledge"
+            shutil.copytree(_PROJECT_ROOT / "data" / "knowledge", knowledge_dir)
+            print("提示: --no-sediment 已启用，复盘案例写入知识库临时拷贝，"
+                  "不修改 data/knowledge/ 种子数据")
 
-    print_report(report, orchestrator)
-    return 0
+        orchestrator = Orchestrator(
+            output_dir=args.output_dir,
+            approval_handler=None if args.auto_approve else interactive_approval,
+            knowledge_dir=knowledge_dir,
+            negotiation=args.negotiation or None,
+            negotiation_overrides=overrides,
+            plan_selector=None if args.auto_approve else interactive_plan_selection,
+        )
+
+        if args.list_scenarios:
+            print("可用场景：")
+            for item in orchestrator.list_scenarios():
+                print(f"  - {item['name']:<24} {item['description']}")
+            return 0
+
+        if not args.scenario:
+            parser.print_help()
+            return 2
+
+        try:
+            report = orchestrator.run(args.scenario)
+        except ValueError as exc:  # 未知场景等入参错误
+            print(f"错误: {exc}", file=sys.stderr)
+            return 2
+
+        print_report(report, orchestrator)
+        return 0
+    finally:
+        if tmp_root is not None:
+            shutil.rmtree(tmp_root, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -101,6 +101,8 @@ python3 run_demo.py --scenario transaction_risk_surge --auto-approve  # 金融�
 | `--scenario / -s` | 场景名（见 `--list-scenarios`） |
 | `--auto-approve` | 自动批准 medium/high 风险方案；**不加则进入交互式审批** |
 | `--negotiation` | 开启 Agent 协商机制（证据补充反馈环 + 多方案协商），默认关闭、不影响原有行为 |
+| `--rca-threshold` | 临时覆盖 RCA 置信度阈值（默认 0.6，仅协商模式下生效） |
+| `--no-sediment` | 复盘案例只写入知识库临时拷贝，**不修改仓库种子数据**（适合反复演示） |
 | `--output-dir / -o` | 产物输出目录（默认 `./output`） |
 
 ### 2. 人工审批交互
@@ -261,7 +263,14 @@ export DASHSCOPE_API_KEY=sk-xxx      # 向量化使用 DashScope embedding
 
 **Q5：知识库会被 Demo 运行污染吗？**
 
-`replay_eval.py` 使用知识库临时拷贝，不写回仓库；`run_demo.py` 的案例沉淀按 incident_id 幂等写入 `data/knowledge/cases.jsonl`，提交版本已恢复为 11 条种子案例。
+`replay_eval.py` 与全部测试使用知识库临时拷贝，不写回仓库。`run_demo.py` 默认会把复盘案例沉淀到 `data/knowledge/cases.jsonl`（展示"经验闭环"效果），幂等口径为 `incident_id`；由于每次运行会生成新的 `incident_id`，**反复演示会持续追加案例**。两种处理方式：
+
+```bash
+python3 run_demo.py -s db_pool_exhaustion --auto-approve --no-sediment  # 推荐：演示不写回仓库
+git checkout data/knowledge/cases.jsonl                                 # 或事后还原为 11 条种子
+```
+
+提交版本已恢复为 11 条种子案例。
 
 **Q6：`--negotiation` 协商模式是什么？会影响默认行为吗？**
 
