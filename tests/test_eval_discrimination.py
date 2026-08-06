@@ -2,11 +2,13 @@
 """评测区分度测试：好 case（Golden）应得高分，坏 case（故意错误方案）应得低分。
 
 覆盖点：
-1. 好 case（3 条 Golden 样本）总分均 ≥ 90；
+1. 好 case（Golden 样本）总分均 ≥ 90；
 2. 坏 case（6 条故意错误样本）总分均 < 50；
 3. 好坏两组均分差距 ≥ 40 分，证明评测规则有区分度而非"太松"；
-4. 每类错误类型（根因/动作/验证/闭环/安全/综合）在其对应维度得分显著低，
-   证明五维规则各自独立可检出对应错误。
+4. 每类错误类型（根因/动作/验证/闭环/安全/综合）在其对应维度得分显著低；
+5. 坏 case 数据结构与 Golden Dataset 完全一致；
+6. 单维度隔离扰动：只篡改某一维度的输入字段时，仅该维度掉分，
+   其余四维分值与未扰动时完全一致，证明五个维度各自独立评分、互不串扰。
 
 全程离线（MockJudge），复用 scripts/eval_discrimination_test.py 的评测逻辑，
 不修改 evaluator.py 评分规则。
@@ -21,12 +23,13 @@ import pytest
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 from eval_discrimination_test import (  # noqa: E402
-    BAD_CASES_PATH, BAD_DIMENSION_MAX, BAD_TYPE_TO_RULE, GOLDEN_PATH,
-    bad_case_error_type, run_discrimination,
+    BAD_CASES_PATH, BAD_DIMENSION_MAX, BAD_TYPE_TO_RULE, DIMENSION_MUTATIONS,
+    GOLDEN_PATH, ISOLATED_TARGET_MAX, bad_case_error_type, build_isolated_sample,
+    run_discrimination,
 )
 
 from opspilot.evaluation.dataset_builder import load_golden_dataset  # noqa: E402
-from opspilot.evaluation.evaluator import RULE_WEIGHTS  # noqa: E402
+from opspilot.evaluation.evaluator import RULE_WEIGHTS, evaluate_sample  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -115,3 +118,45 @@ def test_bad_cases_schema_matches_golden():
         assert bad_case_error_type(sample["case_id"]) in BAD_TYPE_TO_RULE
         assert set(RULE_WEIGHTS) <= {"root_cause", "action_type", "verification",
                                      "loop_completeness", "safety_compliance"}
+
+
+# ---------------------------------------------------------------------------
+# 6. 单维度隔离扰动：仅被扰动维度掉分，其余四维分值不变
+# ---------------------------------------------------------------------------
+
+def test_isolation_covers_every_rule_dimension(discrimination):
+    """五个规则维度均有对应的单维度扰动用例。"""
+    checks = discrimination["isolation_checks"]
+    assert checks, "缺少单维度隔离扰动结果"
+    assert set(DIMENSION_MUTATIONS) == set(RULE_WEIGHTS), "扰动未覆盖全部五个维度"
+    assert {c["dimension"] for c in checks} == set(RULE_WEIGHTS)
+
+
+def test_isolated_mutation_only_affects_target_dimension(discrimination):
+    """扰动后：目标维度明显掉分，其余四维得分与扰动前完全一致。"""
+    for check in discrimination["isolation_checks"]:
+        assert check["mutated_score"] <= ISOLATED_TARGET_MAX, (
+            f"{check['case_id']} 被扰动维度 {check['dimension']} 得分 "
+            f"{check['mutated_score']} 未降至 {ISOLATED_TARGET_MAX} 以下")
+        assert check["mutated_score"] < check["baseline_score"], \
+            f"{check['case_id']} 扰动后得分未下降"
+        assert not check["affected_others"], (
+            f"{check['case_id']} 扰动 {check['dimension']} 时连带影响了其余维度: "
+            f"{check['affected_others']}")
+        assert check["isolated"] is True
+
+
+def test_isolated_sample_keeps_expected_and_other_fields(discrimination):
+    """扰动样本仅改写目标维度的输入字段，expected 与 Golden 保持一致。"""
+    goldens = load_golden_dataset(GOLDEN_PATH)
+    assert goldens
+    golden = goldens[0]
+    for rule_key in DIMENSION_MUTATIONS:
+        mutated = build_isolated_sample(golden, rule_key)
+        # expected（标准答案）不得被篡改
+        assert mutated["expected"] == golden["expected"]
+        assert mutated["scenario"] == golden["scenario"]
+        assert mutated["case_id"].startswith(f"ISO-{rule_key}-")
+        # 原 Golden 样本不受副作用影响（深拷贝）
+        assert evaluate_sample(golden)["rules"][rule_key]["score"] == \
+            pytest.approx(100.0)

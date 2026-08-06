@@ -127,6 +127,11 @@ PYTHONPATH=src python3 -m opspilot.evaluation.build_dataset   # 仅增量构建 
 
 三层评估体系：**规则评估**（根因命中 0.30 / 动作类型 0.20 / 验证一致 0.15 / 闭环完整 0.20 / 安全合规 0.15，加权 0-100 分）+ **LLM-as-Judge**（根因质量/方案合理性/复盘质量三维 1-5 分，默认确定性 MockJudge）+ **回放测试**（控制台汇总表 + `eval_report_*.json/.md` 落盘，含与上次运行对比）。
 
+评测区分度双重验证（`python3 scripts/eval_discrimination_test.py`）：
+
+- **好/坏 case 对比**：6 条人工构造坏 case 按真实处置建模（含多维连带效应），好 case 均分 100 vs 坏 case 均分 34.47，差距 **65.53 分**；
+- **五维独立性（单维度隔离扰动）**：从 Golden 样本出发，每次只篡改某一维度读取的输入字段（4 样本 × 5 维度 = **20 次扰动**），验证该维度明显掉分（100 → 0/0/0/60/50）且**其余四维分值完全不变**，证明分差不是单一维度误差放大所致。
+
 ### 4. Streamlit 可观测看板（可选）
 
 ```bash
@@ -204,7 +209,7 @@ python3 -m pytest tests/ -v        # 全量 61 项，全程离线，约 10 秒
 - `test_stage3.py`：Golden 构建幂等 / 规则评分边界 / 成本三维一致性 / 预算告警 / 回放评测；
 - `test_finance_scenario.py`：金融风控场景逐 Skill 复用断言（跨行业复用验证）；
 - `test_negotiation.py`：协商机制（证据补充反馈环 / 多方案打分选择 / 默认关闭兼容性）；
-- `test_eval_discrimination.py`：评测区分度（好/坏 case 分差 ≥40、逐维度可检出）。
+- `test_eval_discrimination.py`：评测区分度（好/坏 case 分差 ≥40、逐维度可检出、单维度扰动下五维互不串扰）。
 
 ## 配置说明
 
