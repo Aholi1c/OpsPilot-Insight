@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-green.svg)](requirements.txt)
-[![Tests](https://img.shields.io/badge/Tests-61%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-64%20passed-brightgreen.svg)](tests/)
 
 > 本项目以 [Apache License 2.0](LICENSE) 开源发布（Copyright © OpsPilot-Insight Contributors）。
 
@@ -78,7 +78,7 @@ python3 run_demo.py --scenario db_pool_exhaustion --auto-approve
 # ② 一键回放评测（4 场景回放 + Golden Dataset 构建 + 评测报告）
 python3 scripts/replay_eval.py
 
-# ③ 运行全部测试（61 项，全程离线）
+# ③ 运行全部测试（64 项，全程离线）
 python3 -m pytest tests/ -v
 ```
 
@@ -195,13 +195,13 @@ opspilot-insight/
 │   ├── CROSS_SCENARIO_REUSE.md     # 跨行业复用验证报告（金融风控场景，6 Skill 零修改）
 │   └── RBAC_DESIGN.md              # 权限模型与审批流设计（RBAC/审批矩阵/威胁模型）
 ├── output/                         # 运行时产物目录（git 忽略，保留 .gitkeep）
-└── tests/                          # 61 项测试（e2e / 阶段 2 / 阶段 3 / 金融场景 / 协商 / 评测区分度）
+└── tests/                          # 64 项测试（e2e / 阶段 2 / 阶段 3 / 金融场景 / 协商 / 评测区分度）
 ```
 
 ## 测试
 
 ```bash
-python3 -m pytest tests/ -v        # 全量 61 项，全程离线，约 10 秒
+python3 -m pytest tests/ -v        # 全量 64 项，全程离线，约 10 秒
 ```
 
 - `test_e2e.py`：3 个运维场景端到端闭环 + Span 树父子关系校验；
@@ -250,7 +250,7 @@ export DASHSCOPE_API_KEY=sk-xxx      # 向量化使用 DashScope embedding
 
 这是刻意的工程决策，而非能力缺失：
 
-1. **赛事离线复现保障**：评审红线是"按 README 无法复现 Demo 即取消评奖"。MockProvider 提供确定性输出，保证任何环境（无 API Key、无网络、任何时间）都能 100% 复现完整五段闭环、全部 61 项测试与评测报告；
+1. **赛事离线复现保障**：评审红线是"按 README 无法复现 Demo 即取消评奖"。MockProvider 提供确定性输出，保证任何环境（无 API Key、无网络、任何时间）都能 100% 复现完整五段闭环、全部 64 项测试与评测报告；
 2. **接口已预留 DashScope**：`src/opspilot/llm/` 下 Provider 抽象已完整实现 `DashScopeProvider`（urllib 直连、读取真实 token usage 计费），两个环境变量即可切换（见上文配置说明），业务代码零改动；
 3. **执行链路本就不依赖 LLM**：ExecutorAgent 的安全执行为确定性逻辑（白名单/幂等/回滚），LLM 仅用于摘要、根因叙述、方案叙述与复盘增强，Mock 与真实 Provider 下闭环行为一致。
 

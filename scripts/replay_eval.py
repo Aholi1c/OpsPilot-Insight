@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回放评测：一键对 3 个内置场景各跑一遍五段闭环并立即评估，生成汇总。
+"""回放评测：一键对 4 个内置场景各跑一遍五段闭环并立即评估，生成汇总。
 
-    python scripts/replay_eval.py                    # 3 场景回放 + Golden 构建 + 评测报告
+    python scripts/replay_eval.py                    # 4 场景回放 + Golden 构建 + 评测报告
     python scripts/replay_eval.py --output-dir out2  # 指定产物目录
     python scripts/replay_eval.py --scenario container_oom  # 只回放指定场景
 
@@ -40,7 +40,7 @@ def run_replay(
     scenarios = scenarios or SCENARIOS
     golden_path = golden_path or _PROJECT_ROOT / "data" / "golden" / "golden_dataset.jsonl"
 
-    # ---- 1. 回放：3 场景各跑一遍五段闭环（知识库用临时拷贝，避免案例沉淀污染仓库）----
+    # ---- 1. 回放：4 场景各跑一遍五段闭环（知识库用临时拷贝，避免案例沉淀污染仓库）----
     tmp_root = Path(tempfile.mkdtemp(prefix="opspilot_replay_"))
     try:
         knowledge_dir = tmp_root / "knowledge"
@@ -100,11 +100,11 @@ def _print_summary(report: Dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="replay_eval",
-        description="回放评测：3 场景五段闭环回放 + Golden Dataset 构建 + 评测报告生成（全程离线）",
+        description="回放评测：4 场景五段闭环回放 + Golden Dataset 构建 + 评测报告生成（全程离线）",
     )
     parser.add_argument("--output-dir", "-o", default=None, help="产物输出目录（默认 ./output）")
     parser.add_argument("--scenario", "-s", action="append", dest="scenarios",
-                        help="只回放指定场景（可多次传入，默认全部 3 个）")
+                        help="只回放指定场景（可多次传入，默认全部 4 个）")
     args = parser.parse_args()
 
     report = run_replay(output_dir=args.output_dir, scenarios=args.scenarios)
