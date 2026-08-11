@@ -86,7 +86,7 @@
 | LLM 凭证环境变量注入、不落盘 | ✅ 已实现 | `src/opspilot/llm/dashscope_provider.py` |
 | 多角色账号体系与角色绑定 | 🔵 生产演进设计 | 当前审批人为单一交互终端输入方（approver 字段已预留），角色区分待接 SSO |
 | high 风险双人复核 | 🔵 生产演进设计 | 审批数据模型（ApprovalRecord）可扩展为多签列表 |
-| SSO / IM 审批集成、审批 token 防重放 | 🔵 生产演进设计 | 复赛/决赛路线图（`docs/submission/方案PPT大纲.md` P13） |
+| SSO / IM 审批集成、审批 token 防重放 | 🔵 生产演进设计 | 后续版本路线图（接入企业 SSO 与 IM 审批机器人时落地） |
 | 机器人凭证按适配器隔离与轮换 | 🔵 生产演进设计 | 接入真实 MCP 适配器时落地 |
 | 审计 WORM 存储与哈希链 | 🔵 生产演进设计 | 当前为本地 append-only JSONL |
 
