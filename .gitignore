@@ -31,5 +31,3 @@ tmp/
 # ====== 赛事平台提交材料（不进入 GitHub 开源仓库）======
 docs/submission/
 docs/evidence/
-scripts/generate_ppt.py
-scripts/capture_dashboard.py

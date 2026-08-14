@@ -1,7 +1,7 @@
 # Skill 清单（Skill Catalog）v2.0
 
-> OpsPilot-Insight 的 Skill 体系。阶段 1 交付 3 个诊断类 Skill；
-> 阶段 2 交付 6 个执行/验证/复盘/RAG 类 Skill，共 9 个，全部已实现。
+> OpsPilot-Insight 的 Skill 体系：诊断类 3 个，执行/验证/复盘/RAG 类 6 个，
+> 共 9 个，全部已实现。
 >
 > 所有 Skill 继承 `src/opspilot/skills/base.py` 的 `Skill` 基类，
 > `execute()` 自动包 Trace Span（`skill.{name}`）并上报进程内指标，统一返回 `SkillResult`。
@@ -58,7 +58,7 @@
 
 ---
 
-## 4. SafeExecute（safe_execute）—— 已实现（阶段 2）
+## 4. SafeExecute（safe_execute）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |
@@ -75,7 +75,7 @@
 | **复用价值** | 高：换真实执行后端（K8s/Ansible）只需替换 execution 适配器，安全边界逻辑不变 |
 | **版本** | 1.0.0 |
 
-## 5. RiskGuard（risk_guard）—— 已实现（阶段 2）
+## 5. RiskGuard（risk_guard）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |
@@ -91,7 +91,7 @@
 | **复用价值** | 高：风险规则可持续扩展（频控/时间窗/变更冻结期等） |
 | **版本** | 1.0.0 |
 
-## 6. RecoveryVerify（recovery_verify）—— 已实现（阶段 2）
+## 6. RecoveryVerify（recovery_verify）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |
@@ -107,7 +107,7 @@
 | **复用价值** | 高：对接真实 Prometheus 后判定算法（异常方向识别 + 基线回归阈值）不变 |
 | **版本** | 1.0.0 |
 
-## 7. Postmortem（postmortem）—— 已实现（阶段 2）
+## 7. Postmortem（postmortem）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |
@@ -123,7 +123,7 @@
 | **复用价值** | 高：案例文档结构与知识库 schema 对齐，形成“处置→沉淀→检索”经验闭环 |
 | **版本** | 1.0.0 |
 
-## 8. CaseRetrieval（case_retrieval）—— 已实现（阶段 2）
+## 8. CaseRetrieval（case_retrieval）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |
@@ -139,7 +139,7 @@
 | **复用价值** | 高：案例库随 VerifierAgent 沉淀自动增长，检索效果持续提升 |
 | **版本** | 1.0.0 |
 
-## 9. RunbookRag（runbook_rag）—— 已实现（阶段 2）
+## 9. RunbookRag（runbook_rag）—— 已实现
 
 | 字段 | 内容 |
 | --- | --- |

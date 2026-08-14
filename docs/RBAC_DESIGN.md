@@ -77,17 +77,17 @@
 
 | 能力 | 状态 | 证据位置 |
 | --- | --- | --- |
-| 动作白名单硬校验（10 类，白名单外拒绝） | ✅ 已实现 | `config/action_whitelist.yaml`、`src/opspilot/skills/safe_execute.py`、审计 `whitelist_check` |
-| medium/high 强制审批（交互式 y/n / auto-approve），拒绝即不执行 | ✅ 已实现 | `src/opspilot/agents/executor_agent.py`、`tests/test_stage2.py` |
-| 审批决定入审计（who/when/decision/reason） | ✅ 已实现 | `output/audit_*.jsonl` 的 `approval` 事件 |
-| 检查点自动回滚 + 备选动作续行 | ✅ 已实现 | `src/opspilot/skills/safe_execute.py`、network_latency 场景演示 |
-| 幂等键防重复执行 | ✅ 已实现 | `safe_execute.py::make_idempotency_key` |
-| 保守风险策略（未知动作按 high、评估失败按最保守） | ✅ 已实现 | `src/opspilot/skills/risk_guard.py` |
-| LLM 凭证环境变量注入、不落盘 | ✅ 已实现 | `src/opspilot/llm/dashscope_provider.py` |
-| 多角色账号体系与角色绑定 | 🔵 生产演进设计 | 当前审批人为单一交互终端输入方（approver 字段已预留），角色区分待接 SSO |
-| high 风险双人复核 | 🔵 生产演进设计 | 审批数据模型（ApprovalRecord）可扩展为多签列表 |
-| SSO / IM 审批集成、审批 token 防重放 | 🔵 生产演进设计 | 后续版本路线图（接入企业 SSO 与 IM 审批机器人时落地） |
-| 机器人凭证按适配器隔离与轮换 | 🔵 生产演进设计 | 接入真实 MCP 适配器时落地 |
-| 审计 WORM 存储与哈希链 | 🔵 生产演进设计 | 当前为本地 append-only JSONL |
+| 动作白名单硬校验（10 类，白名单外拒绝） | 已实现 | `config/action_whitelist.yaml`、`src/opspilot/skills/safe_execute.py`、审计 `whitelist_check` |
+| medium/high 强制审批（交互式 y/n / auto-approve），拒绝即不执行 | 已实现 | `src/opspilot/agents/executor_agent.py`、`tests/test_pipeline_safety.py` |
+| 审批决定入审计（who/when/decision/reason） | 已实现 | `output/audit_*.jsonl` 的 `approval` 事件 |
+| 检查点自动回滚 + 备选动作续行 | 已实现 | `src/opspilot/skills/safe_execute.py`、network_latency 场景演示 |
+| 幂等键防重复执行 | 已实现 | `safe_execute.py::make_idempotency_key` |
+| 保守风险策略（未知动作按 high、评估失败按最保守） | 已实现 | `src/opspilot/skills/risk_guard.py` |
+| LLM 凭证环境变量注入、不落盘 | 已实现 | `src/opspilot/llm/dashscope_provider.py` |
+| 多角色账号体系与角色绑定 | 生产演进设计 | 当前审批人为单一交互终端输入方（approver 字段已预留），角色区分待接 SSO |
+| high 风险双人复核 | 生产演进设计 | 审批数据模型（ApprovalRecord）可扩展为多签列表 |
+| SSO / IM 审批集成、审批 token 防重放 | 生产演进设计 | 后续版本路线图（接入企业 SSO 与 IM 审批机器人时落地） |
+| 机器人凭证按适配器隔离与轮换 | 生产演进设计 | 接入真实 MCP 适配器时落地 |
+| 审计 WORM 存储与哈希链 | 生产演进设计 | 当前为本地 append-only JSONL |
 
 **小结**：当前实现已完整覆盖"白名单 → 审批 → 幂等 → 回滚 → 审计"的单机安全闭环（全部可离线复现核验）；本文的角色分权、双签、凭证治理属于生产化演进层，数据模型与审计埋点已为其预留扩展位（approver 字段、审计事件结构），不需要重构核心链路。

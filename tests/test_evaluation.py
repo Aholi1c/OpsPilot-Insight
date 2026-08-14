@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""阶段 3 测试：Golden Dataset / 规则评估 / 成本三维分解 / 预算告警 / 回放评测。
+"""Golden Dataset / 规则评估 / 成本三维分解 / 预算告警 / 回放评测。
 
 覆盖点：
 1. 回放脚本：全场景回放 + Golden 构建 + 评测报告一键完成，各场景总分 ≥ 85；
@@ -42,7 +42,7 @@ from opspilot.orchestrator import Orchestrator  # noqa: E402
 @pytest.fixture(scope="module")
 def replay_env(tmp_path_factory):
     """模块级共享：完整跑一次回放评测（全场景 + Golden 构建 + 评测报告）。"""
-    root = tmp_path_factory.mktemp("stage3")
+    root = tmp_path_factory.mktemp("eval_suite")
     output_dir = root / "output"
     golden_path = root / "golden" / "golden_dataset.jsonl"
     report = run_replay(output_dir=output_dir, golden_path=golden_path, console=False)

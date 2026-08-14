@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""轻量 YAML 子集解析器（阶段 1 不允许引入 PyYAML，自研实现）。
+"""轻量 YAML 子集解析器（不引入 PyYAML，自研实现）。
 
 支持 config/agents.yaml 所需的特性子集：
 - 缩进表示的嵌套映射（2 空格缩进）

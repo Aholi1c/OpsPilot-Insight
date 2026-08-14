@@ -1,7 +1,7 @@
 # Agent Identity 清单
 
 > OpsPilot-Insight 全部 5 个 Agent 的身份定义。与 `config/agents.yaml` 保持一致；
-> 阶段 2 起 5 个 Agent 均已实现并在五段串行闭环中启用。
+> 5 个 Agent 均已实现，并在五段串行闭环中启用。
 >
 > 字段说明：Name（标识）/ Role（角色）/ Capabilities（能力）/ Inputs（输入）/
 > Outputs（输出）/ Dependencies（依赖）/ DecisionBoundary（决策边界）/ Trace（链路埋点）。
@@ -47,7 +47,7 @@
 | **DecisionBoundary** | 只产出方案不执行任何变更；medium 及以上风险必须声明需人工审批；无可信根因时输出高风险"冻结发布 + 转人工"兜底方案 |
 | **Trace** | Span `agent.PlannerAgent` → 子 Span `llm.complete`；协商模式下多个并行 `agent.PlannerAgent` span 挂在 `plan.negotiation` 下 |
 
-## 4. ExecutorAgent（已实现，阶段 2）
+## 4. ExecutorAgent（已实现）
 
 | 字段 | 内容 |
 | --- | --- |
@@ -60,7 +60,7 @@
 | **DecisionBoundary** | 仅执行已审批方案中的白名单动作，白名单外一律拒绝并审计留痕；审批被拒不执行任何动作；动作失败自动按检查点逆序回滚后续行备选动作 |
 | **Trace** | Span `agent.ExecutorAgent` → 子 Span `skill.risk_guard` / `skill.safe_execute` → 每个动作 `execute.step_N`（CLIENT，含幂等键/状态属性）与 `execute.rollback` |
 
-## 5. VerifierAgent（已实现，阶段 2）
+## 5. VerifierAgent（已实现）
 
 | 字段 | 内容 |
 | --- | --- |

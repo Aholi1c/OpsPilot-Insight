@@ -4,7 +4,7 @@
 - 一次流水线运行 = 一个 MetricsCollector 实例，与 trace_id 关联；
 - 运行结束由 Orchestrator 导出 output/metrics_*.json；
 - token 数为估算值（区分 CJK 与 ASCII 字符分别估算，仅用于成本感知，非计费口径）；
-- 阶段 3 扩展：逐次 LLM 调用事件（agent/model/skill 归因）与 cost 成本段。
+- 逐次 LLM 调用事件按 agent/model/skill 归因，并汇总为 cost 成本段。
 """
 from __future__ import annotations
 

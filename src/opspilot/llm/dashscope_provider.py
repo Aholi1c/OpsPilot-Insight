@@ -2,7 +2,7 @@
 """DashScopeProvider：通义千问 Provider（OpenAI 兼容模式，标准库 urllib 实现）。
 
 - 读取环境变量 DASHSCOPE_API_KEY，不引入 dashscope SDK；
-- 阶段 1 不要求真实调用，代码路径完整可用，设置好 Key 即可切换：
+- 默认离线演示走 MockProvider；配好 Key 后切换到真实调用：
   export OPSPILOT_LLM_PROVIDER=dashscope && export DASHSCOPE_API_KEY=sk-xxx
 """
 from __future__ import annotations

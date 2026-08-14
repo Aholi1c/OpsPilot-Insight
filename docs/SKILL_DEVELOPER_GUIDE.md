@@ -252,7 +252,7 @@ DAG 中的位置（上游输入来源、下游消费方），禁止引入反向�
 
 ### 6.1 单元测试（必选）
 
-- 位置：`tests/` 下按阶段组织（现有 `test_stage2.py`、`test_stage3.py` 为范例）；
+- 位置：`tests/` 下按能力主题组织（现有 `test_pipeline_safety.py`、`test_evaluation.py` 为范例）；
 - **Mock 全部外部依赖**：适配器用最小假实现或场景 JSON 数据（`examples/scenarios/`），
   禁止单元测试访问网络或真实资源；
 - 必须覆盖四类用例：正常路径、preconditions 缺失、依赖适配器异常时的

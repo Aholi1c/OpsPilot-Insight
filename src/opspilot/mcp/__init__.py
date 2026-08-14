@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""MCP 工具适配层（阶段 1 为 Mock 实现，从场景数据目录读取 JSON）。"""
+"""MCP 工具适配层（当前为 Mock 实现，从场景数据目录读取 JSON）。"""
 
 from .mock_adapters import (
     ChangeAdapter,

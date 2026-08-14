@@ -1,3 +1,4 @@
-# 阶段 1 仅允许两个第三方依赖（FastAPI/Chroma/Streamlit/OTel SDK 留给后续阶段）
+# 主流程只依赖下列两个包，保证无 Key、无网络即可离线复现；
+# Chroma（向量检索）与 Streamlit（看板）属可选能力，见 requirements-optional.txt / requirements-ui.txt
 pydantic>=2.5
 pytest>=7.4

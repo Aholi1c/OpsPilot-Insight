@@ -195,7 +195,7 @@ opspilot-insight/
 │   ├── CROSS_SCENARIO_REUSE.md     # 跨行业复用验证报告（金融风控场景，6 Skill 零修改）
 │   └── RBAC_DESIGN.md              # 权限模型与审批流设计（RBAC/审批矩阵/威胁模型）
 ├── output/                         # 运行时产物目录（git 忽略，保留 .gitkeep）
-└── tests/                          # 64 项测试（e2e / 阶段 2 / 阶段 3 / 金融场景 / 协商 / 评测区分度）
+└── tests/                          # 64 项测试（闭环 / 安全执行 / 评测 / 金融场景 / 协商 / 评测区分度）
 ```
 
 ## 测试
@@ -205,8 +205,8 @@ python3 -m pytest tests/ -v        # 全量 64 项，全程离线，约 10 秒
 ```
 
 - `test_e2e.py`：3 个运维场景端到端闭环 + Span 树父子关系校验；
-- `test_stage2.py`：五段闭环 / 白名单拒绝 / 幂等跳过 / 失败回滚 / RAG 检索 / 案例沉淀幂等；
-- `test_stage3.py`：Golden 构建幂等 / 规则评分边界 / 成本三维一致性 / 预算告警 / 回放评测；
+- `test_pipeline_safety.py`：五段闭环 / 白名单拒绝 / 幂等跳过 / 失败回滚 / RAG 检索 / 案例沉淀幂等；
+- `test_evaluation.py`：Golden 构建幂等 / 规则评分边界 / 成本三维一致性 / 预算告警 / 回放评测；
 - `test_finance_scenario.py`：金融风控场景逐 Skill 复用断言（跨行业复用验证）；
 - `test_negotiation.py`：协商机制（证据补充反馈环 / 多方案打分选择 / 默认关闭兼容性）；
 - `test_eval_discrimination.py`：评测区分度（好/坏 case 分差 ≥40、逐维度可检出、单维度扰动下五维互不串扰）。

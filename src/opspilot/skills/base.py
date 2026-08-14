@@ -21,7 +21,7 @@ from ..observability import AuditLog, JsonLogger, MetricsCollector, Tracer
 class SkillContext:
     """Skill 执行上下文：链路、日志、MCP 适配器与场景信息。
 
-    阶段 2 扩展：审计事件流（audit）、进程内指标（metrics）与额外依赖
+    另携带审计事件流（audit）、进程内指标（metrics）与额外依赖
     （extras：动作白名单 / RAG 检索器 / 知识库 / 审批回调等）。
     """
 
@@ -40,7 +40,7 @@ class Skill(ABC):
     name: str = "base_skill"
     version: str = "0.1.0"
     description: str = ""
-    input_schema: Dict[str, str] = {}   # 参数名 -> 说明（轻量 schema，阶段 2 换 JSON Schema）
+    input_schema: Dict[str, str] = {}   # 参数名 -> 说明（轻量 schema，待接入更严格的 JSON Schema）
     output_schema: Dict[str, str] = {}
     preconditions: List[str] = []       # 执行前置条件（payload 必须包含的键）
     failure_policy: str = "degrade"     # degrade / abort

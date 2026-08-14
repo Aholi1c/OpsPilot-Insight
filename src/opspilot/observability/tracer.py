@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""自研轻量 Tracer（阶段 1 不引入 OpenTelemetry SDK，数据结构遵循 OTel 语义）。
+"""自研轻量 Tracer（不引入 OpenTelemetry SDK，数据结构遵循 OTel 语义）。
 
 - Span 字段：trace_id / span_id / parent_span_id / name / kind /
   start_time / end_time（epoch 纳秒）/ attributes / status
